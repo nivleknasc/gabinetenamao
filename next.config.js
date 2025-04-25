@@ -8,6 +8,10 @@ const nextConfig = {
     // Desabilitar a verificação de tipos durante o build
     ignoreBuildErrors: true,
   },
+  // Configurar renderização dinâmica para páginas específicas
+  experimental: {
+    missingSuspenseWithCSRInDevelopment: false,
+  },
 };
 
 module.exports = nextConfig;
