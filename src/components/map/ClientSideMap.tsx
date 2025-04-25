@@ -19,25 +19,32 @@ export default function ClientSideMap({ leads }: { leads: Lead[] }) {
     // Importar os componentes do Leaflet dinamicamente
     const importLeaflet = async () => {
       try {
+        // Importar o CSS do Leaflet primeiro
+        await import('leaflet/dist/leaflet.css');
+
+        // Importar o Leaflet e React-Leaflet
         const leaflet = await import('leaflet');
         const reactLeaflet = await import('react-leaflet');
-        
-        // Importar o CSS do Leaflet
-        await import('leaflet/dist/leaflet.css');
-        
-        setL(leaflet.default);
+
+        // Definir o L primeiro
+        const L = leaflet.default || leaflet;
+        setL(L);
+
+        // Corrigir o problema dos ícones do Leaflet
+        if (L.Icon && L.Icon.Default) {
+          delete (L.Icon.Default.prototype as any)._getIconUrl;
+          L.Icon.Default.mergeOptions({
+            iconRetinaUrl: 'https://unpkg.com/leaflet@1.7.1/dist/images/marker-icon-2x.png',
+            iconUrl: 'https://unpkg.com/leaflet@1.7.1/dist/images/marker-icon.png',
+            shadowUrl: 'https://unpkg.com/leaflet@1.7.1/dist/images/marker-shadow.png',
+          });
+        }
+
+        // Definir os componentes do React-Leaflet
         setLeafletMap(reactLeaflet.MapContainer);
         setTileLayer(reactLeaflet.TileLayer);
         setMarker(reactLeaflet.Marker);
         setPopup(reactLeaflet.Popup);
-        
-        // Corrigir o problema dos ícones do Leaflet
-        delete (leaflet.default.Icon.Default.prototype as any)._getIconUrl;
-        leaflet.default.Icon.Default.mergeOptions({
-          iconRetinaUrl: 'https://unpkg.com/leaflet@1.7.1/dist/images/marker-icon-2x.png',
-          iconUrl: 'https://unpkg.com/leaflet@1.7.1/dist/images/marker-icon.png',
-          shadowUrl: 'https://unpkg.com/leaflet@1.7.1/dist/images/marker-shadow.png',
-        });
       } catch (error) {
         console.error('Erro ao carregar o Leaflet:', error);
       }
@@ -50,16 +57,28 @@ export default function ClientSideMap({ leads }: { leads: Lead[] }) {
   const defaultCenter = [-15.77972, -47.92972];
 
   // Criar um ícone personalizado para os marcadores
-  const icon = L ? L.icon({
-    iconUrl: 'https://unpkg.com/leaflet@1.7.1/dist/images/marker-icon.png',
-    shadowUrl: 'https://unpkg.com/leaflet@1.7.1/dist/images/marker-shadow.png',
-    iconSize: [25, 41],
-    iconAnchor: [12, 41],
-    popupAnchor: [1, -34],
-    shadowSize: [41, 41]
-  }) : null;
+  const [icon, setIcon] = useState<any>(null);
 
-  if (!isClient || !LeafletMap || !TileLayer || !Marker || !Popup) {
+  // Criar o ícone quando L estiver disponível
+  useEffect(() => {
+    if (L && L.icon) {
+      try {
+        const newIcon = L.icon({
+          iconUrl: 'https://unpkg.com/leaflet@1.7.1/dist/images/marker-icon.png',
+          shadowUrl: 'https://unpkg.com/leaflet@1.7.1/dist/images/marker-shadow.png',
+          iconSize: [25, 41],
+          iconAnchor: [12, 41],
+          popupAnchor: [1, -34],
+          shadowSize: [41, 41]
+        });
+        setIcon(newIcon);
+      } catch (error) {
+        console.error('Erro ao criar ícone:', error);
+      }
+    }
+  }, [L]);
+
+  if (!isClient || !LeafletMap || !TileLayer || !Marker || !Popup || !icon || !L) {
     return (
       <div className="h-[500px] bg-gray-100 dark:bg-gray-700 rounded-lg flex items-center justify-center">
         <p className="text-gray-500 dark:text-gray-400">Carregando mapa...</p>
