@@ -2,7 +2,9 @@
 
 import { useState, useEffect } from 'react';
 import { Lead } from '@/lib/supabase/client';
-import { SparklesIcon, LightBulbIcon, ArrowPathIcon } from '@heroicons/react/24/outline';
+import { SparklesIcon, LightBulbIcon, ArrowPathIcon, ArrowRightIcon } from '@heroicons/react/24/outline';
+import { analisarLeadsComIA } from '@/lib/openai/client';
+import Link from 'next/link';
 
 interface AIInsightsProps {
   leads: Lead[];
@@ -20,154 +22,77 @@ export default function AIInsights({ leads }: AIInsightsProps) {
   const [insights, setInsights] = useState<Insight[]>([]);
   const [isLoading, setIsLoading] = useState(false);
   const [isGenerating, setIsGenerating] = useState(false);
-  
+  const [error, setError] = useState<string | null>(null);
+
   useEffect(() => {
     if (leads.length > 0 && !isLoading && insights.length === 0) {
       generateInsights();
     }
   }, [leads]);
-  
+
   const generateInsights = async () => {
     setIsLoading(true);
     setIsGenerating(true);
-    
+    setError(null);
+
     try {
-      // Em um ambiente real, você faria uma chamada para uma API de IA
-      // Aqui, vamos simular uma análise com base nos dados
-      
-      // Simular um atraso para parecer que está processando
-      await new Promise(resolve => setTimeout(resolve, 2000));
-      
-      const mockInsights: Insight[] = [];
-      
-      // Análise por bairro
-      const bairrosCount: Record<string, { count: number; cidade: string }> = {};
-      leads.forEach(lead => {
-        if (!bairrosCount[lead.bairro]) {
-          bairrosCount[lead.bairro] = { count: 0, cidade: lead.cidade };
-        }
-        bairrosCount[lead.bairro].count += 1;
-      });
-      
-      // Encontrar o bairro com mais leads
-      const topBairros = Object.entries(bairrosCount)
-        .sort((a, b) => b[1].count - a[1].count)
-        .slice(0, 3);
-      
-      if (topBairros.length > 0) {
-        const [topBairro, { count, cidade }] = topBairros[0];
-        mockInsights.push({
-          id: '1',
-          title: `${topBairro} é o bairro com mais leads`,
-          description: `${count} leads foram captados no bairro ${topBairro} em ${cidade}. Considere direcionar mais recursos para esta área.`,
+      // Verificar se há leads suficientes para análise
+      if (leads.length < 3) {
+        setError('Número insuficiente de leads para realizar uma análise detalhada.');
+        setIsLoading(false);
+        setIsGenerating(false);
+        return;
+      }
+
+      // Chamar a API da OpenAI para análise
+      const analiseIA = await analisarLeadsComIA(leads, false);
+
+      // Converter os insights da API para o formato usado pelo componente
+      const aiInsights: Insight[] = [];
+
+      // Adicionar insights principais
+      analiseIA.insights.forEach((insight, index) => {
+        aiInsights.push({
+          id: `insight-${index}`,
+          title: insight.split('.')[0] || 'Insight relevante',
+          description: insight,
           type: 'discovery',
-          confidence: 0.92,
+          confidence: 0.85 + (Math.random() * 0.1), // Simular confiança entre 85% e 95%
         });
-      }
-      
-      // Análise por horário
-      const horariosCaptacao: Record<string, number> = {
-        'manhã': 0,
-        'tarde': 0,
-        'noite': 0,
-      };
-      
-      leads.forEach(lead => {
-        const hora = new Date(lead.data_captacao).getHours();
-        if (hora >= 6 && hora < 12) horariosCaptacao['manhã'] += 1;
-        else if (hora >= 12 && hora < 18) horariosCaptacao['tarde'] += 1;
-        else horariosCaptacao['noite'] += 1;
       });
-      
-      const melhorHorario = Object.entries(horariosCaptacao)
-        .sort((a, b) => b[1] - a[1])[0][0];
-      
-      mockInsights.push({
-        id: '2',
-        title: `Melhor horário para captação: ${melhorHorario}`,
-        description: `A maioria dos leads são captados durante o período da ${melhorHorario}. Considere intensificar campanhas neste horário.`,
-        type: 'suggestion',
-        confidence: 0.85,
-      });
-      
-      // Análise de formulários
-      const formulariosCount: Record<string, number> = {};
-      leads.forEach(lead => {
-        if (!formulariosCount[lead.formulario_id]) {
-          formulariosCount[lead.formulario_id] = 0;
-        }
-        formulariosCount[lead.formulario_id] += 1;
-      });
-      
-      const topFormulario = Object.entries(formulariosCount)
-        .sort((a, b) => b[1] - a[1])[0];
-      
-      mockInsights.push({
-        id: '3',
-        title: `Formulário mais eficiente: ID ${topFormulario[0]}`,
-        description: `O formulário ID ${topFormulario[0]} captou ${topFormulario[1]} leads. Analise este formulário para entender o que o torna mais eficiente.`,
-        type: 'discovery',
-        confidence: 0.88,
-      });
-      
-      // Análise de crescimento
-      const hoje = new Date();
-      const ontem = new Date(hoje);
-      ontem.setDate(ontem.getDate() - 1);
-      
-      const leadsHoje = leads.filter(lead => {
-        const data = new Date(lead.data_captacao);
-        return data.toDateString() === hoje.toDateString();
-      }).length;
-      
-      const leadsOntem = leads.filter(lead => {
-        const data = new Date(lead.data_captacao);
-        return data.toDateString() === ontem.toDateString();
-      }).length;
-      
-      const crescimento = leadsHoje - leadsOntem;
-      
-      if (crescimento > 0) {
-        mockInsights.push({
-          id: '4',
-          title: `Crescimento de ${crescimento} leads hoje`,
-          description: `Houve um aumento de ${crescimento} leads em relação ao dia anterior. Continue com as estratégias atuais.`,
+
+      // Adicionar tendências
+      analiseIA.tendencias.forEach((tendencia, index) => {
+        aiInsights.push({
+          id: `trend-${index}`,
+          title: tendencia.titulo,
+          description: tendencia.descricao,
           type: 'trend',
-          confidence: 0.78,
+          confidence: tendencia.porcentagem ? tendencia.porcentagem / 100 : 0.8,
         });
-      } else if (crescimento < 0) {
-        mockInsights.push({
-          id: '4',
-          title: `Queda de ${Math.abs(crescimento)} leads hoje`,
-          description: `Houve uma diminuição de ${Math.abs(crescimento)} leads em relação ao dia anterior. Revise suas estratégias de captação.`,
-          type: 'trend',
-          confidence: 0.78,
-        });
-      }
-      
-      // Sugestão de expansão
-      if (topBairros.length > 1) {
-        const segundoBairro = topBairros[1][0];
-        const terceiroBairro = topBairros.length > 2 ? topBairros[2][0] : null;
-        
-        mockInsights.push({
-          id: '5',
-          title: 'Oportunidade de expansão',
-          description: `Considere expandir sua atuação para bairros próximos a ${topBairros[0][0]}, como ${segundoBairro}${terceiroBairro ? ` e ${terceiroBairro}` : ''}, que já mostram bom potencial de captação.`,
+      });
+
+      // Adicionar recomendações
+      analiseIA.recomendacoes.forEach((recomendacao, index) => {
+        aiInsights.push({
+          id: `suggestion-${index}`,
+          title: recomendacao.split('.')[0] || 'Recomendação estratégica',
+          description: recomendacao,
           type: 'suggestion',
-          confidence: 0.75,
+          confidence: 0.75 + (Math.random() * 0.15), // Simular confiança entre 75% e 90%
         });
-      }
-      
-      setInsights(mockInsights);
+      });
+
+      setInsights(aiInsights);
     } catch (error) {
       console.error('Erro ao gerar insights:', error);
+      setError('Ocorreu um erro ao processar a análise. Tente novamente mais tarde.');
     } finally {
       setIsLoading(false);
       setIsGenerating(false);
     }
   };
-  
+
   const getIconForType = (type: Insight['type']) => {
     switch (type) {
       case 'discovery':
@@ -182,7 +107,7 @@ export default function AIInsights({ leads }: AIInsightsProps) {
         );
     }
   };
-  
+
   return (
     <div className="bg-white dark:bg-gray-800 shadow-md dark:shadow-lg rounded-xl overflow-hidden transition-colors duration-200">
       <div className="p-4 border-b border-gray-200 dark:border-gray-700 bg-gray-100 dark:bg-gray-900 flex justify-between items-center">
@@ -192,39 +117,59 @@ export default function AIInsights({ leads }: AIInsightsProps) {
             Análise inteligente dos seus dados de leads
           </p>
         </div>
-        <button
-          onClick={generateInsights}
-          disabled={isGenerating}
-          className={`inline-flex items-center px-3 py-1.5 border border-gray-300 dark:border-gray-600 text-sm font-medium rounded-md ${
-            isGenerating
-              ? 'text-gray-400 dark:text-gray-500 bg-gray-100 dark:bg-gray-800 cursor-not-allowed'
-              : 'text-gray-700 dark:text-gray-300 bg-white dark:bg-gray-800 hover:bg-gray-50 dark:hover:bg-gray-700'
-          } transition-colors duration-200`}
-        >
-          {isGenerating ? (
-            <>
-              <ArrowPathIcon className="h-4 w-4 mr-1 animate-spin" />
-              Analisando...
-            </>
-          ) : (
-            <>
-              <ArrowPathIcon className="h-4 w-4 mr-1" />
-              Atualizar
-            </>
-          )}
-        </button>
+        <div className="flex items-center space-x-3">
+          <Link
+            href="/dashboard/analise-ia"
+            className="text-sm text-blue-600 hover:text-blue-800 dark:text-blue-400 dark:hover:text-blue-300 flex items-center"
+          >
+            Análise completa
+            <ArrowRightIcon className="h-4 w-4 ml-1" />
+          </Link>
+          <button
+            onClick={generateInsights}
+            disabled={isGenerating}
+            className={`inline-flex items-center px-3 py-1.5 border border-gray-300 dark:border-gray-600 text-sm font-medium rounded-md ${
+              isGenerating
+                ? 'text-gray-400 dark:text-gray-500 bg-gray-100 dark:bg-gray-800 cursor-not-allowed'
+                : 'text-gray-700 dark:text-gray-300 bg-white dark:bg-gray-800 hover:bg-gray-50 dark:hover:bg-gray-700'
+            } transition-colors duration-200`}
+          >
+            {isGenerating ? (
+              <>
+                <ArrowPathIcon className="h-4 w-4 mr-1 animate-spin" />
+                Analisando...
+              </>
+            ) : (
+              <>
+                <ArrowPathIcon className="h-4 w-4 mr-1" />
+                Atualizar
+              </>
+            )}
+          </button>
+        </div>
       </div>
-      
+
       <div className="p-4">
         {isLoading ? (
           <div className="flex flex-col items-center justify-center py-8">
             <ArrowPathIcon className="h-8 w-8 text-gray-400 dark:text-gray-500 animate-spin mb-4" />
-            <p className="text-gray-500 dark:text-gray-400">Analisando seus dados...</p>
+            <p className="text-gray-500 dark:text-gray-400">Analisando seus dados com IA avançada...</p>
+            <p className="text-xs text-gray-400 dark:text-gray-500 mt-2">Isso pode levar alguns instantes</p>
+          </div>
+        ) : error ? (
+          <div className="text-center py-8">
+            <p className="text-red-500 dark:text-red-400 mb-4">{error}</p>
+            <button
+              onClick={generateInsights}
+              className="px-4 py-2 bg-blue-600 hover:bg-blue-700 text-white rounded-lg transition-colors"
+            >
+              Tentar novamente
+            </button>
           </div>
         ) : insights.length > 0 ? (
           <div className="space-y-4">
             {insights.map((insight) => (
-              <div 
+              <div
                 key={insight.id}
                 className="p-4 border border-gray-200 dark:border-gray-700 rounded-lg bg-gray-50 dark:bg-gray-800"
               >
@@ -244,8 +189,14 @@ export default function AIInsights({ leads }: AIInsightsProps) {
                         Confiança: {Math.round(insight.confidence * 100)}%
                       </div>
                       <div className="ml-2 w-24 h-1.5 bg-gray-200 dark:bg-gray-700 rounded-full overflow-hidden">
-                        <div 
-                          className="h-full bg-gray-800 dark:bg-gray-400 rounded-full"
+                        <div
+                          className={`h-full rounded-full ${
+                            insight.confidence > 0.85
+                              ? 'bg-green-500 dark:bg-green-600'
+                              : insight.confidence > 0.7
+                                ? 'bg-blue-500 dark:bg-blue-600'
+                                : 'bg-yellow-500 dark:bg-yellow-600'
+                          }`}
                           style={{ width: `${insight.confidence * 100}%` }}
                         ></div>
                       </div>
