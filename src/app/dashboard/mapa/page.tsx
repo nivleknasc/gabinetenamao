@@ -2,8 +2,7 @@
 
 import { useState, useEffect } from 'react';
 import DashboardLayout from '@/components/layout/DashboardLayout';
-import LeadsMap from '@/components/map/LeadsMap';
-import LeadsMapRegions from '@/components/map/LeadsMapRegions';
+import ClientOnlyMap from '@/components/map/ClientOnlyMap';
 import { Lead } from '@/lib/supabase/client';
 
 export default function MapaPage() {
@@ -148,33 +147,13 @@ export default function MapaPage() {
       <div className="space-y-6">
         <h1 className="text-2xl font-semibold text-gray-900 dark:text-white">Mapa de Leads</h1>
 
-        <div className="grid grid-cols-1 lg:grid-cols-2 gap-6">
-          {/* Mapa interativo */}
-          <div>
-            <h2 className="text-xl font-semibold text-gray-900 dark:text-white mb-4">Visualização Geográfica</h2>
-            {isLoading ? (
-              <div className="flex justify-center items-center h-64 bg-white dark:bg-gray-800 rounded-lg shadow-md dark:shadow-lg">
-                <p className="text-gray-500 dark:text-gray-400">Carregando mapa...</p>
-              </div>
-            ) : (
-              <div className="bg-white dark:bg-gray-800 shadow-md dark:shadow-lg rounded-xl overflow-hidden">
-                <LeadsMap leads={leads} />
-              </div>
-            )}
+        {isLoading ? (
+          <div className="flex justify-center items-center h-64 bg-white dark:bg-gray-800 rounded-lg shadow-md dark:shadow-lg">
+            <p className="text-gray-500 dark:text-gray-400">Carregando dados...</p>
           </div>
-
-          {/* Distribuição por regiões */}
-          <div>
-            <h2 className="text-xl font-semibold text-gray-900 dark:text-white mb-4">Distribuição Regional</h2>
-            {isLoading ? (
-              <div className="flex justify-center items-center h-64 bg-white dark:bg-gray-800 rounded-lg shadow-md dark:shadow-lg">
-                <p className="text-gray-500 dark:text-gray-400">Carregando dados...</p>
-              </div>
-            ) : (
-              <LeadsMapRegions leads={leads} />
-            )}
-          </div>
-        </div>
+        ) : (
+          <ClientOnlyMap leads={leads} />
+        )}
       </div>
     </DashboardLayout>
   );

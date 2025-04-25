@@ -12,6 +12,11 @@ const nextConfig = {
   experimental: {
     missingSuspenseWithCSRInDevelopment: false,
   },
+  // Configurar o Webpack para lidar com módulos do Leaflet
+  webpack: (config) => {
+    config.resolve.fallback = { fs: false, path: false };
+    return config;
+  },
 };
 
 module.exports = nextConfig;
