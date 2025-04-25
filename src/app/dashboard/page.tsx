@@ -11,6 +11,7 @@ import FormulariosAtivos from '@/components/dashboard/FormulariosAtivos';
 import LeadsPorBairro from '@/components/dashboard/LeadsPorBairro';
 import AIInsights from '@/components/dashboard/AIInsights';
 import { MapCard } from '@/components/map/MapCard';
+import { GoogleMapCard } from '@/components/map/GoogleMapCard';
 import { supabase, Lead, Formulario } from '@/lib/supabase/client';
 
 export default function DashboardPage() {
@@ -349,7 +350,7 @@ export default function DashboardPage() {
                   <p className="text-gray-500 dark:text-gray-400">Carregando mapa...</p>
                 </div>
               }>
-                <MapCard leads={leads} />
+                <GoogleMapCard leads={leads} />
               </Suspense>
             )}
 
