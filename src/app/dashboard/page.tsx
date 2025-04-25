@@ -13,6 +13,7 @@ import AIInsights from '@/components/dashboard/AIInsights';
 import { MapCard } from '@/components/map/MapCard';
 import { GoogleMapCard } from '@/components/map/GoogleMapCard';
 import { supabase, Lead, Formulario } from '@/lib/supabase/client';
+import mockLeads from '@/data/mockLeads';
 
 export default function DashboardPage() {
   const [leads, setLeads] = useState<Lead[]>([]);
@@ -34,121 +35,7 @@ export default function DashboardPage() {
         // Em um ambiente real, você buscaria os dados do Supabase
         // const { data, error } = await supabase.from('leads').select('*');
 
-        // Dados de exemplo para demonstração - Leads
-        const mockLeads: Lead[] = [
-          {
-            id: '1',
-            nome: 'João Silva',
-            email: 'joao@exemplo.com',
-            telefone: '(11) 98765-4321',
-            cidade: 'São Paulo',
-            estado: 'SP',
-            bairro: 'Moema',
-            latitude: -23.5505,
-            longitude: -46.6333,
-            data_captacao: new Date().toISOString(),
-            formulario_id: '1',
-            created_at: new Date().toISOString(),
-          },
-          {
-            id: '2',
-            nome: 'Maria Oliveira',
-            email: 'maria@exemplo.com',
-            telefone: '(21) 98765-4321',
-            cidade: 'Rio de Janeiro',
-            estado: 'RJ',
-            bairro: 'Copacabana',
-            latitude: -22.9068,
-            longitude: -43.1729,
-            data_captacao: new Date().toISOString(),
-            formulario_id: '1',
-            created_at: new Date().toISOString(),
-          },
-          {
-            id: '3',
-            nome: 'Pedro Santos',
-            email: 'pedro@exemplo.com',
-            telefone: '(31) 98765-4321',
-            cidade: 'Belo Horizonte',
-            estado: 'MG',
-            bairro: 'Savassi',
-            latitude: -19.9167,
-            longitude: -43.9345,
-            data_captacao: new Date().toISOString(),
-            formulario_id: '2',
-            created_at: new Date().toISOString(),
-          },
-          {
-            id: '4',
-            nome: 'Ana Souza',
-            email: 'ana@exemplo.com',
-            telefone: '(11) 97654-3210',
-            cidade: 'São Paulo',
-            estado: 'SP',
-            bairro: 'Pinheiros',
-            latitude: -23.5667,
-            longitude: -46.6889,
-            data_captacao: new Date().toISOString(),
-            formulario_id: '1',
-            created_at: new Date().toISOString(),
-          },
-          {
-            id: '5',
-            nome: 'Carlos Ferreira',
-            email: 'carlos@exemplo.com',
-            telefone: '(11) 91234-5678',
-            cidade: 'São Paulo',
-            estado: 'SP',
-            bairro: 'Moema',
-            latitude: -23.5505,
-            longitude: -46.6333,
-            data_captacao: new Date().toISOString(),
-            formulario_id: '2',
-            created_at: new Date().toISOString(),
-          },
-          {
-            id: '6',
-            nome: 'Fernanda Lima',
-            email: 'fernanda@exemplo.com',
-            telefone: '(21) 98765-1234',
-            cidade: 'Rio de Janeiro',
-            estado: 'RJ',
-            bairro: 'Ipanema',
-            latitude: -22.9848,
-            longitude: -43.1985,
-            data_captacao: new Date().toISOString(),
-            formulario_id: '1',
-            created_at: new Date().toISOString(),
-          },
-          {
-            id: '7',
-            nome: 'Roberto Alves',
-            email: 'roberto@exemplo.com',
-            telefone: '(31) 99876-5432',
-            cidade: 'Belo Horizonte',
-            estado: 'MG',
-            bairro: 'Lourdes',
-            latitude: -19.9333,
-            longitude: -43.9345,
-            data_captacao: new Date().toISOString(),
-            formulario_id: '2',
-            created_at: new Date().toISOString(),
-          },
-          {
-            id: '8',
-            nome: 'Juliana Costa',
-            email: 'juliana@exemplo.com',
-            telefone: '(11) 98888-7777',
-            cidade: 'São Paulo',
-            estado: 'SP',
-            bairro: 'Vila Mariana',
-            latitude: -23.5882,
-            longitude: -46.6382,
-            data_captacao: new Date().toISOString(),
-            formulario_id: '1',
-            created_at: new Date().toISOString(),
-          },
-        ];
+        // Usando os 3500 leads aleatórios gerados
 
         // Dados de exemplo para demonstração - Formulários
         const mockFormularios: Formulario[] = [
@@ -207,6 +94,7 @@ export default function DashboardPage() {
           },
         ];
 
+        // Usar os 3500 leads aleatórios
         setLeads(mockLeads);
         setFilteredLeads(mockLeads);
         setFormularios(mockFormularios);

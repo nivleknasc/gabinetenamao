@@ -5,6 +5,7 @@ import dynamic from 'next/dynamic';
 import DashboardLayout from '@/components/layout/DashboardLayout';
 import DistribuicaoRegional from '@/components/map/DistribuicaoRegional';
 import { supabase, Lead } from '@/lib/supabase/client';
+import mockLeads from '@/data/mockLeads';
 
 // Importar o componente do Google Maps dinamicamente, sem SSR
 const GoogleMapsComponent = dynamic(() => import('@/components/map/GoogleMapsComponent'), {
@@ -24,19 +25,10 @@ export default function MapaPage() {
     async function fetchLeads() {
       try {
         setIsLoading(true);
-        const { data, error } = await supabase
-          .from('leads')
-          .select('*')
-          .order('created_at', { ascending: false });
-
-        if (error) {
-          console.error('Erro ao buscar leads:', error);
-          return;
-        }
-
-        setLeads(data || []);
+        // Usar os 3500 leads aleatórios em vez de buscar do Supabase
+        setLeads(mockLeads);
       } catch (error) {
-        console.error('Erro ao buscar leads:', error);
+        console.error('Erro ao processar leads:', error);
       } finally {
         setIsLoading(false);
       }

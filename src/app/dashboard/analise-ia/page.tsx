@@ -5,6 +5,7 @@ import DashboardLayout from '@/components/layout/DashboardLayout';
 import AnaliseDetalhada from '@/components/ia/AnaliseDetalhada';
 import { supabase, Lead } from '@/lib/supabase/client';
 import { ArrowPathIcon, ChartBarIcon } from '@heroicons/react/24/outline';
+import mockLeads from '@/data/mockLeads';
 
 export default function AnaliseIAPage() {
   const [leads, setLeads] = useState<Lead[]>([]);
@@ -18,20 +19,10 @@ export default function AnaliseIAPage() {
         setIsLoading(true);
         setError(null);
 
-        const { data, error } = await supabase
-          .from('leads')
-          .select('*')
-          .order('created_at', { ascending: false });
-
-        if (error) {
-          console.error('Erro ao buscar leads:', error);
-          setError('Não foi possível carregar os dados dos leads. Tente novamente mais tarde.');
-          return;
-        }
-
-        setLeads(data || []);
+        // Usar os 3500 leads aleatórios em vez de buscar do Supabase
+        setLeads(mockLeads);
       } catch (err) {
-        console.error('Erro ao buscar leads:', err);
+        console.error('Erro ao processar leads:', err);
         setError('Ocorreu um erro ao carregar os dados. Tente novamente mais tarde.');
       } finally {
         setIsLoading(false);
