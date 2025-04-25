@@ -1,0 +1,380 @@
+'use client';
+
+import { useState, useEffect } from 'react';
+import Link from 'next/link';
+import { ChartBarIcon, UserGroupIcon, DocumentTextIcon, MapIcon } from '@heroicons/react/24/outline';
+import DashboardLayout from '@/components/layout/DashboardLayout';
+import StatCard from '@/components/dashboard/StatCard';
+import StatDetails from '@/components/dashboard/StatDetails';
+import LeadsTable from '@/components/dashboard/LeadsTable';
+import FormulariosAtivos from '@/components/dashboard/FormulariosAtivos';
+import LeadsPorBairro from '@/components/dashboard/LeadsPorBairro';
+import AIInsights from '@/components/dashboard/AIInsights';
+import { supabase, Lead, Formulario } from '@/lib/supabase/client';
+
+export default function DashboardPage() {
+  const [leads, setLeads] = useState<Lead[]>([]);
+  const [filteredLeads, setFilteredLeads] = useState<Lead[]>([]);
+  const [formularios, setFormularios] = useState<Formulario[]>([]);
+  const [isLoading, setIsLoading] = useState(true);
+  const [totalLeads, setTotalLeads] = useState(0);
+  const [leadsHoje, setLeadsHoje] = useState(0);
+
+  // Estado para controlar qual modal de detalhes está aberto
+  const [detailsOpen, setDetailsOpen] = useState<{
+    type: 'totalLeads' | 'leadsHoje' | 'formularios' | 'cidades' | null;
+    isOpen: boolean;
+  }>({ type: null, isOpen: false });
+
+  useEffect(() => {
+    const fetchData = async () => {
+      try {
+        // Em um ambiente real, você buscaria os dados do Supabase
+        // const { data, error } = await supabase.from('leads').select('*');
+
+        // Dados de exemplo para demonstração - Leads
+        const mockLeads: Lead[] = [
+          {
+            id: '1',
+            nome: 'João Silva',
+            email: 'joao@exemplo.com',
+            telefone: '(11) 98765-4321',
+            cidade: 'São Paulo',
+            estado: 'SP',
+            bairro: 'Moema',
+            latitude: -23.5505,
+            longitude: -46.6333,
+            data_captacao: new Date().toISOString(),
+            formulario_id: '1',
+            created_at: new Date().toISOString(),
+          },
+          {
+            id: '2',
+            nome: 'Maria Oliveira',
+            email: 'maria@exemplo.com',
+            telefone: '(21) 98765-4321',
+            cidade: 'Rio de Janeiro',
+            estado: 'RJ',
+            bairro: 'Copacabana',
+            latitude: -22.9068,
+            longitude: -43.1729,
+            data_captacao: new Date().toISOString(),
+            formulario_id: '1',
+            created_at: new Date().toISOString(),
+          },
+          {
+            id: '3',
+            nome: 'Pedro Santos',
+            email: 'pedro@exemplo.com',
+            telefone: '(31) 98765-4321',
+            cidade: 'Belo Horizonte',
+            estado: 'MG',
+            bairro: 'Savassi',
+            latitude: -19.9167,
+            longitude: -43.9345,
+            data_captacao: new Date().toISOString(),
+            formulario_id: '2',
+            created_at: new Date().toISOString(),
+          },
+          {
+            id: '4',
+            nome: 'Ana Souza',
+            email: 'ana@exemplo.com',
+            telefone: '(11) 97654-3210',
+            cidade: 'São Paulo',
+            estado: 'SP',
+            bairro: 'Pinheiros',
+            latitude: -23.5667,
+            longitude: -46.6889,
+            data_captacao: new Date().toISOString(),
+            formulario_id: '1',
+            created_at: new Date().toISOString(),
+          },
+          {
+            id: '5',
+            nome: 'Carlos Ferreira',
+            email: 'carlos@exemplo.com',
+            telefone: '(11) 91234-5678',
+            cidade: 'São Paulo',
+            estado: 'SP',
+            bairro: 'Moema',
+            latitude: -23.5505,
+            longitude: -46.6333,
+            data_captacao: new Date().toISOString(),
+            formulario_id: '2',
+            created_at: new Date().toISOString(),
+          },
+          {
+            id: '6',
+            nome: 'Fernanda Lima',
+            email: 'fernanda@exemplo.com',
+            telefone: '(21) 98765-1234',
+            cidade: 'Rio de Janeiro',
+            estado: 'RJ',
+            bairro: 'Ipanema',
+            latitude: -22.9848,
+            longitude: -43.1985,
+            data_captacao: new Date().toISOString(),
+            formulario_id: '1',
+            created_at: new Date().toISOString(),
+          },
+          {
+            id: '7',
+            nome: 'Roberto Alves',
+            email: 'roberto@exemplo.com',
+            telefone: '(31) 99876-5432',
+            cidade: 'Belo Horizonte',
+            estado: 'MG',
+            bairro: 'Lourdes',
+            latitude: -19.9333,
+            longitude: -43.9345,
+            data_captacao: new Date().toISOString(),
+            formulario_id: '2',
+            created_at: new Date().toISOString(),
+          },
+          {
+            id: '8',
+            nome: 'Juliana Costa',
+            email: 'juliana@exemplo.com',
+            telefone: '(11) 98888-7777',
+            cidade: 'São Paulo',
+            estado: 'SP',
+            bairro: 'Vila Mariana',
+            latitude: -23.5882,
+            longitude: -46.6382,
+            data_captacao: new Date().toISOString(),
+            formulario_id: '1',
+            created_at: new Date().toISOString(),
+          },
+        ];
+
+        // Dados de exemplo para demonstração - Formulários
+        const mockFormularios: Formulario[] = [
+          {
+            id: '1',
+            nome: 'Formulário de Contato',
+            descricao: 'Formulário para captação de leads interessados em nossos produtos',
+            campos: [
+              {
+                id: 'campo_1',
+                nome: 'Nome',
+                tipo: 'texto',
+                obrigatorio: true,
+              },
+              {
+                id: 'campo_2',
+                nome: 'Email',
+                tipo: 'email',
+                obrigatorio: true,
+              },
+              {
+                id: 'campo_3',
+                nome: 'Telefone',
+                tipo: 'telefone',
+                obrigatorio: true,
+              },
+            ],
+            created_at: new Date().toISOString(),
+          },
+          {
+            id: '2',
+            nome: 'Pesquisa de Satisfação',
+            descricao: 'Formulário para avaliar a satisfação dos clientes',
+            campos: [
+              {
+                id: 'campo_1',
+                nome: 'Nome',
+                tipo: 'texto',
+                obrigatorio: true,
+              },
+              {
+                id: 'campo_2',
+                nome: 'Email',
+                tipo: 'email',
+                obrigatorio: true,
+              },
+              {
+                id: 'campo_6',
+                nome: 'Avaliação',
+                tipo: 'radio',
+                obrigatorio: true,
+                opcoes: ['Excelente', 'Bom', 'Regular', 'Ruim', 'Péssimo'],
+              },
+            ],
+            created_at: new Date().toISOString(),
+          },
+        ];
+
+        setLeads(mockLeads);
+        setFilteredLeads(mockLeads);
+        setFormularios(mockFormularios);
+        setTotalLeads(mockLeads.length);
+
+        // Calcular leads de hoje
+        const hoje = new Date().toISOString().split('T')[0];
+        const leadsDeHoje = mockLeads.filter(
+          (lead) => lead.data_captacao.split('T')[0] === hoje
+        );
+        setLeadsHoje(leadsDeHoje.length);
+
+        setIsLoading(false);
+      } catch (error) {
+        console.error('Erro ao buscar dados:', error);
+        setIsLoading(false);
+      }
+    };
+
+    fetchData();
+  }, []);
+
+  const handleFilterChange = (filters: { cidade?: string; estado?: string }) => {
+    let filtered = [...leads];
+
+    if (filters.cidade) {
+      filtered = filtered.filter((lead) => lead.cidade === filters.cidade);
+    }
+
+    if (filters.estado) {
+      filtered = filtered.filter((lead) => lead.estado === filters.estado);
+    }
+
+    setFilteredLeads(filtered);
+  };
+
+  // Função para abrir o modal de detalhes
+  const openDetails = (type: 'totalLeads' | 'leadsHoje' | 'formularios' | 'cidades') => {
+    setDetailsOpen({ type, isOpen: true });
+  };
+
+  // Função para fechar o modal de detalhes
+  const closeDetails = () => {
+    setDetailsOpen({ type: null, isOpen: false });
+  };
+
+  return (
+    <DashboardLayout>
+      <div className="space-y-6">
+        <h1 className="text-2xl font-semibold text-gray-900 dark:text-white">GABINETE NA MÃO</h1>
+
+        {/* Bento Grid - Estatísticas */}
+        <div className="grid grid-cols-1 gap-5 sm:grid-cols-2 lg:grid-cols-4">
+          <StatCard
+            title="Total de Leads"
+            value={totalLeads}
+            icon={<UserGroupIcon className="h-6 w-6 text-white" aria-hidden="true" />}
+            onClick={() => openDetails('totalLeads')}
+          />
+          <StatCard
+            title="Leads Hoje"
+            value={leadsHoje}
+            icon={<ChartBarIcon className="h-6 w-6 text-white" aria-hidden="true" />}
+            change={`${leadsHoje} novos leads hoje`}
+            trend="up"
+            onClick={() => openDetails('leadsHoje')}
+          />
+          <StatCard
+            title="Formulários Ativos"
+            value={formularios.length}
+            icon={<DocumentTextIcon className="h-6 w-6 text-white" aria-hidden="true" />}
+            onClick={() => openDetails('formularios')}
+          />
+          <StatCard
+            title="Cidades Mapeadas"
+            value={Array.from(new Set(leads.map(lead => lead.cidade))).length}
+            icon={<MapIcon className="h-6 w-6 text-white" aria-hidden="true" />}
+            onClick={() => openDetails('cidades')}
+          />
+        </div>
+
+        {/* Modal de Detalhes */}
+        {detailsOpen.isOpen && detailsOpen.type && (
+          <StatDetails
+            type={detailsOpen.type}
+            isOpen={detailsOpen.isOpen}
+            onClose={closeDetails}
+            leads={leads}
+            formularios={formularios}
+          />
+        )}
+
+        {/* Formulários Ativos - Destaque */}
+        <div className="mb-6">
+          <h2 className="text-xl font-semibold text-gray-900 dark:text-white mb-4">Formulários Ativos</h2>
+          {isLoading ? (
+            <div className="flex justify-center items-center h-64 bg-white dark:bg-gray-800 rounded-xl shadow-md dark:shadow-lg">
+              <p className="text-gray-500 dark:text-gray-400">Carregando formulários...</p>
+            </div>
+          ) : (
+            <FormulariosAtivos formularios={formularios} />
+          )}
+        </div>
+
+        {/* Bento Grid - Layout Principal */}
+        <div className="grid grid-cols-1 lg:grid-cols-3 gap-6">
+          {/* Coluna 1-2 - Tabela de Leads */}
+          <div className="lg:col-span-2">
+            <h2 className="text-xl font-semibold text-gray-900 dark:text-white mb-4">Leads Captados</h2>
+            {isLoading ? (
+              <div className="flex justify-center items-center h-64 bg-white dark:bg-gray-800 rounded-xl shadow-md dark:shadow-lg">
+                <p className="text-gray-500 dark:text-gray-400">Carregando dados...</p>
+              </div>
+            ) : (
+              <LeadsTable leads={filteredLeads} onFilterChange={handleFilterChange} />
+            )}
+
+            {/* IA Insights */}
+            <div className="mt-6">
+              <h2 className="text-xl font-semibold text-gray-900 dark:text-white mb-4">Análise Inteligente</h2>
+              {isLoading ? (
+                <div className="flex justify-center items-center h-64 bg-white dark:bg-gray-800 rounded-xl shadow-md dark:shadow-lg">
+                  <p className="text-gray-500 dark:text-gray-400">Carregando dados...</p>
+                </div>
+              ) : (
+                <AIInsights leads={leads} />
+              )}
+            </div>
+          </div>
+
+          {/* Coluna 3 - Mapa Simplificado */}
+          <div className="lg:col-span-1">
+            <h2 className="text-xl font-semibold text-gray-900 dark:text-white mb-4">Distribuição Geográfica</h2>
+            {isLoading ? (
+              <div className="flex justify-center items-center h-64 bg-white dark:bg-gray-800 rounded-xl shadow-md dark:shadow-lg">
+                <p className="text-gray-500 dark:text-gray-400">Carregando mapa...</p>
+              </div>
+            ) : (
+              <div className="bg-white dark:bg-gray-800 shadow-md dark:shadow-lg rounded-xl overflow-hidden transition-colors duration-200">
+                <div className="p-4 border-b border-gray-200 dark:border-gray-700">
+                  <h3 className="text-md font-medium text-gray-900 dark:text-white">Mapa de Leads</h3>
+                  <p className="text-sm text-gray-500 dark:text-gray-400 mt-1">
+                    {leads.filter(lead => lead.latitude && lead.longitude).length} leads mapeados
+                  </p>
+                </div>
+                <div className="p-6 flex justify-center">
+                  <Link
+                    href="/dashboard/mapa"
+                    className="inline-flex items-center px-5 py-2.5 border border-transparent text-sm font-medium rounded-lg shadow-sm text-white bg-gray-800 hover:bg-gray-900 dark:bg-gray-700 dark:hover:bg-gray-600 transition-colors duration-200"
+                  >
+                    Ver Mapa Completo
+                  </Link>
+                </div>
+              </div>
+            )}
+
+            {/* Leads por Bairro */}
+            <div className="mt-6">
+              <h2 className="text-xl font-semibold text-gray-900 dark:text-white mb-4">Leads por Bairro</h2>
+              {isLoading ? (
+                <div className="flex justify-center items-center h-64 bg-white dark:bg-gray-800 rounded-xl shadow-md dark:shadow-lg">
+                  <p className="text-gray-500 dark:text-gray-400">Carregando dados...</p>
+                </div>
+              ) : (
+                <LeadsPorBairro leads={leads} />
+              )}
+            </div>
+          </div>
+        </div>
+      </div>
+    </DashboardLayout>
+  );
+}
