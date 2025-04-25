@@ -1,18 +1,8 @@
 'use client';
 
 import { Suspense } from 'react';
-import dynamic from 'next/dynamic';
 import DashboardLayout from '@/components/layout/DashboardLayout';
-
-// Importar o componente SimpleMap dinamicamente, sem SSR
-const SimpleMap = dynamic(() => import('@/components/map/SimpleMap'), {
-  ssr: false,
-  loading: () => (
-    <div className="flex justify-center items-center h-64 bg-white dark:bg-gray-800 rounded-lg shadow-md dark:shadow-lg">
-      <p className="text-gray-500 dark:text-gray-400">Carregando visualização...</p>
-    </div>
-  )
-});
+import { MapCard } from '@/components/map/MapCard';
 
 // Dados de exemplo para demonstração
 const mockLeads = [
@@ -134,23 +124,17 @@ export default function MapaPage() {
   return (
     <DashboardLayout>
       <div className="space-y-6">
-        <h1 className="text-2xl font-semibold text-gray-900 dark:text-white">Visualização de Leads</h1>
+        <h1 className="text-2xl font-semibold text-gray-900 dark:text-white">Mapa de Leads</h1>
 
-        <Suspense fallback={
-          <div className="flex justify-center items-center h-64 bg-white dark:bg-gray-800 rounded-lg shadow-md dark:shadow-lg">
-            <p className="text-gray-500 dark:text-gray-400">Carregando visualização...</p>
-          </div>
-        }>
-          <div className="bg-white dark:bg-gray-800 shadow-md dark:shadow-lg rounded-xl overflow-hidden">
-            <div className="p-4 border-b border-gray-200 dark:border-gray-700">
-              <h2 className="text-lg font-medium text-gray-900 dark:text-white">Distribuição de Leads</h2>
-              <p className="text-sm text-gray-500 dark:text-gray-400 mt-1">
-                Mostrando {mockLeads.length} leads no total
-              </p>
+        <div className="grid grid-cols-1 gap-6">
+          <Suspense fallback={
+            <div className="flex justify-center items-center h-64 bg-white dark:bg-gray-800 rounded-lg shadow-md dark:shadow-lg">
+              <p className="text-gray-500 dark:text-gray-400">Carregando mapa...</p>
             </div>
-            <SimpleMap leads={mockLeads} />
-          </div>
-        </Suspense>
+          }>
+            <MapCard leads={mockLeads} />
+          </Suspense>
+        </div>
       </div>
     </DashboardLayout>
   );

@@ -1,6 +1,6 @@
 'use client';
 
-import { useState, useEffect } from 'react';
+import { useState, useEffect, Suspense } from 'react';
 import Link from 'next/link';
 import { ChartBarIcon, UserGroupIcon, DocumentTextIcon, MapIcon } from '@heroicons/react/24/outline';
 import DashboardLayout from '@/components/layout/DashboardLayout';
@@ -10,6 +10,7 @@ import LeadsTable from '@/components/dashboard/LeadsTable';
 import FormulariosAtivos from '@/components/dashboard/FormulariosAtivos';
 import LeadsPorBairro from '@/components/dashboard/LeadsPorBairro';
 import AIInsights from '@/components/dashboard/AIInsights';
+import { MapCard } from '@/components/map/MapCard';
 import { supabase, Lead, Formulario } from '@/lib/supabase/client';
 
 export default function DashboardPage() {
@@ -343,22 +344,13 @@ export default function DashboardPage() {
                 <p className="text-gray-500 dark:text-gray-400">Carregando mapa...</p>
               </div>
             ) : (
-              <div className="bg-white dark:bg-gray-800 shadow-md dark:shadow-lg rounded-xl overflow-hidden transition-colors duration-200">
-                <div className="p-4 border-b border-gray-200 dark:border-gray-700">
-                  <h3 className="text-md font-medium text-gray-900 dark:text-white">Mapa de Leads</h3>
-                  <p className="text-sm text-gray-500 dark:text-gray-400 mt-1">
-                    {leads.filter(lead => lead.latitude && lead.longitude).length} leads mapeados
-                  </p>
+              <Suspense fallback={
+                <div className="flex justify-center items-center h-64 bg-white dark:bg-gray-800 rounded-xl shadow-md dark:shadow-lg">
+                  <p className="text-gray-500 dark:text-gray-400">Carregando mapa...</p>
                 </div>
-                <div className="p-6 flex justify-center">
-                  <Link
-                    href="/dashboard/mapa"
-                    className="inline-flex items-center px-5 py-2.5 border border-transparent text-sm font-medium rounded-lg shadow-sm text-white bg-gray-800 hover:bg-gray-900 dark:bg-gray-700 dark:hover:bg-gray-600 transition-colors duration-200"
-                  >
-                    Ver Mapa Completo
-                  </Link>
-                </div>
-              </div>
+              }>
+                <MapCard leads={leads} />
+              </Suspense>
             )}
 
             {/* Leads por Bairro */}
