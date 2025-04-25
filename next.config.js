@@ -17,6 +17,10 @@ const nextConfig = {
     config.resolve.fallback = { fs: false, path: false };
     return config;
   },
+  // Desativar a geração estática para a página de mapa
+  output: 'standalone',
+  // Configurar páginas específicas para serem renderizadas apenas no cliente
+  excludeDefaultMomentLocales: false,
 };
 
 module.exports = nextConfig;
