@@ -8,7 +8,8 @@ import {
   DocumentPlusIcon,
   MapIcon,
   SparklesIcon,
-  UserIcon
+  UserIcon,
+  XMarkIcon
 } from '@heroicons/react/24/outline';
 
 const navigation = [
@@ -20,15 +21,61 @@ const navigation = [
   { name: 'Político', href: '/dashboard/politico', icon: UserIcon },
 ];
 
-export default function Sidebar() {
+interface SidebarProps {
+  isOpen: boolean;
+  setIsOpen: (isOpen: boolean) => void;
+  isMobile: boolean;
+}
+
+export default function Sidebar({ isOpen, setIsOpen, isMobile }: SidebarProps) {
   const pathname = usePathname();
 
   return (
-    <div className="flex flex-col h-full bg-gray-900 dark:bg-gray-950 text-white w-64 fixed inset-y-0 left-0 shadow-xl transition-colors duration-200">
+    <>
+      {/* Sidebar para desktop (fixo) */}
+      <div 
+        className={`
+          ${isMobile ? 'hidden' : 'flex'} 
+          flex-col h-full bg-gray-900 dark:bg-gray-950 text-white w-64 fixed inset-y-0 left-0 shadow-xl 
+          transition-colors duration-200 z-30
+        `}
+      >
+        <SidebarContent pathname={pathname} />
+      </div>
+
+      {/* Sidebar para mobile (retrátil) */}
+      <div 
+        className={`
+          ${isMobile ? 'flex' : 'hidden'} 
+          flex-col h-full bg-gray-900 dark:bg-gray-950 text-white w-64 fixed inset-y-0 left-0 shadow-xl 
+          transition-all duration-300 transform z-40
+          ${isOpen ? 'translate-x-0' : '-translate-x-full'}
+        `}
+      >
+        <div className="absolute top-0 right-0 p-1 -mr-12">
+          <button
+            onClick={() => setIsOpen(false)}
+            className="flex items-center justify-center h-10 w-10 rounded-full bg-gray-800 text-white
+              focus:outline-none focus:ring-2 focus:ring-white shadow-lg hover:bg-gray-700"
+          >
+            <XMarkIcon className="h-6 w-6" aria-hidden="true" />
+            <span className="sr-only">Fechar menu</span>
+          </button>
+        </div>
+        <SidebarContent pathname={pathname} />
+      </div>
+    </>
+  );
+}
+
+// Componente para o conteúdo do sidebar (usado tanto na versão mobile quanto desktop)
+function SidebarContent({ pathname }: { pathname: string }) {
+  return (
+    <>
       <div className="flex items-center justify-center h-16 px-4 border-b border-gray-800 dark:border-gray-700 bg-gray-800 dark:bg-gray-900">
         <h1 className="text-xl font-bold">GABINETE NA MÃO</h1>
       </div>
-      <nav className="flex-1 px-2 py-4 space-y-1">
+      <nav className="flex-1 px-2 py-4 space-y-1 overflow-y-auto">
         {navigation.map((item) => {
           const isActive = pathname === item.href;
           return (
@@ -55,6 +102,6 @@ export default function Sidebar() {
           </div>
         </div>
       </div>
-    </div>
+    </>
   );
 }
