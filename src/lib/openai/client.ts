@@ -1,10 +1,19 @@
 import OpenAI from 'openai';
 import { Lead } from '@/lib/supabase/client';
 
-// Inicializar o cliente da OpenAI
-const openai = new OpenAI({
-  apiKey: process.env.OPENAI_API_KEY,
-});
+// Inicializar o cliente da OpenAI apenas se a chave estiver disponível
+let openai: OpenAI | null = null;
+
+try {
+  // Verificar se estamos no lado do servidor
+  if (typeof window === 'undefined' && process.env.OPENAI_API_KEY) {
+    openai = new OpenAI({
+      apiKey: process.env.OPENAI_API_KEY,
+    });
+  }
+} catch (error) {
+  console.error('Erro ao inicializar o cliente OpenAI:', error);
+}
 
 // Interface para os resultados da análise
 export interface AnaliseIA {
@@ -48,9 +57,9 @@ export async function analisarLeadsComIA(
     let prompt = `
       Você é um assistente especializado em análise política e eleitoral para o Deputado Federal Mauricio Neves (PP-SP).
       Analise os seguintes dados de leads capturados pelo gabinete:
-      
+
       ${JSON.stringify(dadosLeads, null, 2)}
-      
+
       Forneça uma análise detalhada incluindo:
       1. Um resumo conciso da situação atual dos leads
       2. Insights relevantes sobre a distribuição geográfica
@@ -64,6 +73,11 @@ export async function analisarLeadsComIA(
         Identifique regiões onde há potencial de crescimento e onde já existe uma base forte.
         Sugira estratégias específicas para cada região.
       `;
+    }
+
+    // Verificar se o cliente OpenAI está disponível
+    if (!openai) {
+      throw new Error("Cliente OpenAI não está disponível. Verifique se a chave da API está configurada corretamente.");
     }
 
     // Chamar a API da OpenAI
@@ -85,7 +99,7 @@ export async function analisarLeadsComIA(
 
     // Processar a resposta
     const conteudoResposta = response.choices[0].message.content || '';
-    
+
     // Estruturar a resposta em um formato utilizável
     // Esta é uma implementação simplificada - em produção, você pode querer
     // usar uma abordagem mais robusta para analisar o texto
@@ -110,9 +124,9 @@ export async function analisarLeadsComIA(
     return {
       resumo: "Não foi possível realizar a análise neste momento.",
       insights: ["Erro na comunicação com a API de IA."],
-      tendencias: [{ 
-        titulo: "Erro na análise", 
-        descricao: "Não foi possível processar as tendências." 
+      tendencias: [{
+        titulo: "Erro na análise",
+        descricao: "Não foi possível processar as tendências."
       }],
       recomendacoes: ["Tente novamente mais tarde."],
     };
@@ -124,13 +138,13 @@ export async function analisarLeadsComIA(
 function extrairSecao(texto: string, tipo: string): string | null {
   // Implementação simplificada - em produção, use regex mais robustos
   const lowerTexto = texto.toLowerCase();
-  
+
   if (tipo === "resumo") {
     // Tenta encontrar um parágrafo que contenha palavras-chave de resumo
     const paragrafos = texto.split('\n\n');
     for (const paragrafo of paragrafos) {
       if (
-        paragrafo.toLowerCase().includes('resumo') || 
+        paragrafo.toLowerCase().includes('resumo') ||
         paragrafo.toLowerCase().includes('situação atual') ||
         paragrafo.toLowerCase().includes('análise geral')
       ) {
@@ -140,7 +154,7 @@ function extrairSecao(texto: string, tipo: string): string | null {
     // Se não encontrar um parágrafo específico, retorna o primeiro
     return paragrafos[0] || null;
   }
-  
+
   if (tipo === "comparação") {
     // Tenta encontrar seções relacionadas à comparação com votação
     if (lowerTexto.includes('comparação')) {
@@ -150,7 +164,7 @@ function extrairSecao(texto: string, tipo: string): string | null {
       }
     }
   }
-  
+
   return null;
 }
 
@@ -158,13 +172,13 @@ function extrairLista(texto: string, tipo: string): string[] {
   const lowerTexto = texto.toLowerCase();
   const linhas = texto.split('\n');
   const resultados: string[] = [];
-  
+
   let capturando = false;
-  
+
   // Identificar seções baseadas no tipo
   for (const linha of linhas) {
     const lowerLinha = linha.toLowerCase();
-    
+
     // Iniciar captura baseada no tipo
     if (!capturando) {
       if (
@@ -177,11 +191,11 @@ function extrairLista(texto: string, tipo: string): string[] {
         continue;
       }
     }
-    
+
     // Parar de capturar quando encontrar a próxima seção
     if (capturando) {
       if (
-        lowerLinha.includes('resumo:') || 
+        lowerLinha.includes('resumo:') ||
         lowerLinha.includes('tendências:') ||
         (tipo !== "recomendações" && lowerLinha.includes('recomend')) ||
         (tipo !== "insights" && lowerLinha.includes('insight')) ||
@@ -189,7 +203,7 @@ function extrairLista(texto: string, tipo: string): string[] {
       ) {
         break;
       }
-      
+
       // Capturar itens de lista (começando com número, hífen, asterisco)
       if (/^\s*(\d+[\.\)]\s*|\-\s*|\*\s*)/.test(linha) && linha.trim().length > 2) {
         // Remover o marcador de lista e adicionar o item
@@ -200,7 +214,7 @@ function extrairLista(texto: string, tipo: string): string[] {
       }
     }
   }
-  
+
   // Se não encontrou nada, tenta uma abordagem mais simples
   if (resultados.length === 0) {
     // Procura por qualquer linha que pareça um item de lista
@@ -213,7 +227,7 @@ function extrairLista(texto: string, tipo: string): string[] {
       }
     }
   }
-  
+
   // Se ainda não encontrou nada, retorna alguns itens padrão
   if (resultados.length === 0) {
     if (tipo.includes('insight')) {
@@ -228,74 +242,74 @@ function extrairLista(texto: string, tipo: string): string[] {
       ];
     }
   }
-  
+
   return resultados;
 }
 
 function extrairTendencias(texto: string): { titulo: string; descricao: string; porcentagem?: number }[] {
   const tendencias: { titulo: string; descricao: string; porcentagem?: number }[] = [];
   const linhas = texto.split('\n');
-  
+
   let capturandoTendencias = false;
-  
+
   for (let i = 0; i < linhas.length; i++) {
     const linha = linhas[i].toLowerCase();
-    
+
     // Identificar seção de tendências
     if (!capturandoTendencias && linha.includes('tendência')) {
       capturandoTendencias = true;
       continue;
     }
-    
+
     // Parar quando encontrar a próxima seção
     if (capturandoTendencias) {
       if (
-        linha.includes('recomendação') || 
-        linha.includes('conclusão') || 
+        linha.includes('recomendação') ||
+        linha.includes('conclusão') ||
         linha.includes('comparação')
       ) {
         break;
       }
-      
+
       // Capturar itens de tendência (começando com número, hífen, asterisco)
       if (/^\s*(\d+[\.\)]\s*|\-\s*|\*\s*)/.test(linhas[i]) && linhas[i].trim().length > 2) {
         const tendenciaTexto = linhas[i].replace(/^\s*(\d+[\.\)]\s*|\-\s*|\*\s*)/, '').trim();
-        
+
         // Tentar extrair um título e descrição
         const partes = tendenciaTexto.split(':');
         if (partes.length > 1) {
           const titulo = partes[0].trim();
           const descricao = partes.slice(1).join(':').trim();
-          
+
           // Tentar extrair porcentagem se existir
           const porcentagemMatch = descricao.match(/(\d+)%/);
           const porcentagem = porcentagemMatch ? parseInt(porcentagemMatch[1]) : undefined;
-          
+
           tendencias.push({ titulo, descricao, porcentagem });
         } else {
           // Se não conseguir dividir, usa o texto completo como título
-          tendencias.push({ 
-            titulo: tendenciaTexto.substring(0, 30) + (tendenciaTexto.length > 30 ? '...' : ''), 
-            descricao: tendenciaTexto 
+          tendencias.push({
+            titulo: tendenciaTexto.substring(0, 30) + (tendenciaTexto.length > 30 ? '...' : ''),
+            descricao: tendenciaTexto
           });
         }
       }
     }
   }
-  
+
   // Se não encontrou tendências, cria algumas genéricas
   if (tendencias.length === 0) {
     return [
-      { 
-        titulo: "Concentração geográfica", 
-        descricao: "Os leads estão concentrados em determinadas regiões, indicando potencial para expansão." 
+      {
+        titulo: "Concentração geográfica",
+        descricao: "Os leads estão concentrados em determinadas regiões, indicando potencial para expansão."
       },
-      { 
-        titulo: "Sazonalidade na captação", 
-        descricao: "Há variações na captação de leads ao longo do tempo que podem ser exploradas estrategicamente." 
+      {
+        titulo: "Sazonalidade na captação",
+        descricao: "Há variações na captação de leads ao longo do tempo que podem ser exploradas estrategicamente."
       }
     ];
   }
-  
+
   return tendencias;
 }

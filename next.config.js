@@ -8,14 +8,16 @@ const nextConfig = {
     // Desabilitar a verificação de tipos durante o build
     ignoreBuildErrors: true,
   },
-  // Configurar o Webpack para lidar com módulos problemáticos
+  // Configurar o Webpack para lidar com módulos do Leaflet
   webpack: (config) => {
     config.resolve.fallback = { fs: false, path: false };
 
-    // Adicionar regra para ignorar completamente o Leaflet
+    // Adicionar regra para ignorar importações do Leaflet durante o SSR
     config.module.rules.push({
-      test: /leaflet|react-leaflet/,
-      use: 'null-loader',
+      test: /leaflet/,
+      use: {
+        loader: 'null-loader',
+      },
     });
 
     return config;

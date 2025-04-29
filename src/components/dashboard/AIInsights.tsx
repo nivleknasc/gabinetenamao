@@ -25,9 +25,11 @@ export default function AIInsights({ leads }: AIInsightsProps) {
   const [error, setError] = useState<string | null>(null);
 
   useEffect(() => {
-    if (leads.length > 0 && !isLoading && insights.length === 0) {
-      generateInsights();
-    }
+    // Desabilitar a geração automática de insights para evitar erros na inicialização
+    // Se quiser gerar automaticamente, descomente a linha abaixo
+    // if (leads.length > 0 && !isLoading && insights.length === 0) {
+    //   generateInsights();
+    // }
   }, [leads]);
 
   const generateInsights = async () => {
@@ -86,7 +88,11 @@ export default function AIInsights({ leads }: AIInsightsProps) {
       setInsights(aiInsights);
     } catch (error) {
       console.error('Erro ao gerar insights:', error);
-      setError('Ocorreu um erro ao processar a análise. Tente novamente mais tarde.');
+      if (error instanceof Error && error.message.includes('OpenAI')) {
+        setError('Erro de configuração da API OpenAI. Verifique se a chave da API está configurada corretamente.');
+      } else {
+        setError('Ocorreu um erro ao processar a análise. Tente novamente mais tarde.');
+      }
     } finally {
       setIsLoading(false);
       setIsGenerating(false);

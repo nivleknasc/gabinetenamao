@@ -23,6 +23,17 @@ export type Lead = {
   created_at: string;
 };
 
+// Tipo para a aparência do formulário
+export type FormularioAparencia = {
+  mostrarCabecalho: boolean;
+  mostrarDescricaoInicio: boolean;
+  mostrarDescricaoFim: boolean;
+  corFundo: string;
+  corTexto: string;
+  corBotao: string;
+  fundoEscuro: boolean;
+};
+
 // Tipos para os dados do formulário
 export type Formulario = {
   id: string;
@@ -32,6 +43,7 @@ export type Formulario = {
   imagemUrl?: string;
   publicUrl?: string;
   created_at: string;
+  aparencia?: FormularioAparencia;
 };
 
 export type FormularioCampo = {
