@@ -1,18 +1,25 @@
 import OpenAI from 'openai';
 import { Lead } from '@/lib/supabase/client';
 
-// Inicializar o cliente da OpenAI apenas se a chave estiver disponível
-let openai: OpenAI | null = null;
+// Função para obter o cliente OpenAI
+function getOpenAIClient() {
+  // Verificar se a chave da API está disponível
+  const apiKey = process.env.NEXT_PUBLIC_OPENAI_API_KEY || '';
 
-try {
-  // Verificar se estamos no lado do servidor
-  if (typeof window === 'undefined' && process.env.OPENAI_API_KEY) {
-    openai = new OpenAI({
-      apiKey: process.env.OPENAI_API_KEY,
-    });
+  if (!apiKey) {
+    console.warn('NEXT_PUBLIC_OPENAI_API_KEY não está configurada nas variáveis de ambiente');
+    return null;
   }
-} catch (error) {
-  console.error('Erro ao inicializar o cliente OpenAI:', error);
+
+  try {
+    return new OpenAI({
+      apiKey: apiKey,
+      dangerouslyAllowBrowser: true // Permitir uso no navegador
+    });
+  } catch (error) {
+    console.error('Erro ao inicializar o cliente OpenAI:', error);
+    return null;
+  }
 }
 
 // Interface para os resultados da análise
@@ -74,6 +81,9 @@ export async function analisarLeadsComIA(
         Sugira estratégias específicas para cada região.
       `;
     }
+
+    // Obter o cliente OpenAI
+    const openai = getOpenAIClient();
 
     // Verificar se o cliente OpenAI está disponível
     if (!openai) {
