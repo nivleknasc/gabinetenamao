@@ -95,9 +95,9 @@ export async function analisarLeadsComIA(
       throw new Error("Cliente OpenAI não está disponível. Verifique se a chave da API está configurada corretamente.");
     }
 
-    // Chamar a API da OpenAI
+    // Chamar a API da OpenAI (usando modelo mais econômico)
     const response = await openai.chat.completions.create({
-      model: "gpt-4o",
+      model: "gpt-3.5-turbo", // Modelo mais econômico
       messages: [
         {
           role: "system",
