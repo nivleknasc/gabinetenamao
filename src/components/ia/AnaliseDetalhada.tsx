@@ -30,7 +30,11 @@ export default function AnaliseDetalhada({ leads, incluirComparacao = false }: A
 
         // Verificar primeiro se a API da OpenAI está configurada
         try {
-          const apiResponse = await fetch('/api/test-openai');
+          // Obter a chave do localStorage
+          const apiKey = typeof window !== 'undefined' ? localStorage.getItem('OPENAI_API_KEY') : null;
+
+          // Testar a API com a chave do localStorage
+          const apiResponse = await fetch(apiKey ? `/api/test-openai?key=${encodeURIComponent(apiKey)}` : '/api/test-openai');
           const apiStatus = await apiResponse.json();
 
           if (!apiStatus.success) {
@@ -38,7 +42,7 @@ export default function AnaliseDetalhada({ leads, incluirComparacao = false }: A
           }
         } catch (apiError: any) {
           console.error('Erro ao verificar API da OpenAI:', apiError);
-          setError(`Erro na comunicação com a API de IA: ${apiError.message || 'Verifique se a chave da API está configurada corretamente em Administração > Configurar APIs'}`);
+          setError(`Erro na comunicação com a API de IA: ${apiError.message || 'Verifique se a chave da API está configurada corretamente na página de configuração'}`);
           setIsLoading(false);
           return;
         }
@@ -63,7 +67,11 @@ export default function AnaliseDetalhada({ leads, incluirComparacao = false }: A
 
       // Verificar primeiro se a API da OpenAI está configurada
       try {
-        const apiResponse = await fetch('/api/test-openai');
+        // Obter a chave do localStorage
+        const apiKey = typeof window !== 'undefined' ? localStorage.getItem('OPENAI_API_KEY') : null;
+
+        // Testar a API com a chave do localStorage
+        const apiResponse = await fetch(apiKey ? `/api/test-openai?key=${encodeURIComponent(apiKey)}` : '/api/test-openai');
         const apiStatus = await apiResponse.json();
 
         if (!apiStatus.success) {
@@ -71,7 +79,7 @@ export default function AnaliseDetalhada({ leads, incluirComparacao = false }: A
         }
       } catch (apiError: any) {
         console.error('Erro ao verificar API da OpenAI:', apiError);
-        setError(`Erro na comunicação com a API de IA: ${apiError.message || 'Verifique se a chave da API está configurada corretamente em Administração > Configurar APIs'}`);
+        setError(`Erro na comunicação com a API de IA: ${apiError.message || 'Verifique se a chave da API está configurada corretamente na página de configuração'}`);
         setIsLoading(false);
         return;
       }

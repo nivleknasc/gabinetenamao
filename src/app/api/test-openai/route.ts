@@ -1,17 +1,28 @@
 import { NextResponse } from 'next/server';
 import OpenAI from 'openai';
+import { cookies } from 'next/headers';
 
-export async function GET() {
+export async function GET(request: Request) {
   try {
     // Verificar se a chave da API está configurada
-    // Não podemos acessar localStorage no servidor, então esta rota só verifica as variáveis de ambiente
-    const apiKey = process.env.NEXT_PUBLIC_OPENAI_API_KEY;
+    // Tentamos obter a chave da API das variáveis de ambiente
+    let apiKey = process.env.NEXT_PUBLIC_OPENAI_API_KEY;
+
+    // Se não encontrarmos nas variáveis de ambiente, verificamos se foi passada na URL
+    if (!apiKey) {
+      const url = new URL(request.url);
+      const keyFromUrl = url.searchParams.get('key');
+      if (keyFromUrl) {
+        apiKey = keyFromUrl;
+      }
+    }
 
     if (!apiKey) {
       return NextResponse.json({
         success: false,
-        message: 'NEXT_PUBLIC_OPENAI_API_KEY não está configurada nas variáveis de ambiente. Configure a chave na página de administração.',
-        isConfigured: false
+        message: 'Chave da API da OpenAI não encontrada. Configure a chave na página de configuração.',
+        isConfigured: false,
+        env: process.env.NODE_ENV
       }, { status: 400 });
     }
 
