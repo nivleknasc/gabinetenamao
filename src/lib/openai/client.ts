@@ -4,10 +4,15 @@ import { Lead } from '@/lib/supabase/client';
 // Função para obter o cliente OpenAI
 function getOpenAIClient() {
   // Verificar se a chave da API está disponível
-  const apiKey = process.env.NEXT_PUBLIC_OPENAI_API_KEY || '';
+  let apiKey = process.env.NEXT_PUBLIC_OPENAI_API_KEY || '';
+
+  // Se não encontrar nas variáveis de ambiente, tenta buscar do localStorage (apenas no cliente)
+  if (!apiKey && typeof window !== 'undefined') {
+    apiKey = localStorage.getItem('OPENAI_API_KEY') || '';
+  }
 
   if (!apiKey) {
-    console.warn('NEXT_PUBLIC_OPENAI_API_KEY não está configurada nas variáveis de ambiente');
+    console.warn('Chave da API OpenAI não encontrada nas variáveis de ambiente ou localStorage');
     return null;
   }
 

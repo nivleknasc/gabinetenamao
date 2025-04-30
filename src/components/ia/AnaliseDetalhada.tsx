@@ -20,19 +20,34 @@ export default function AnaliseDetalhada({ leads, incluirComparacao = false }: A
       try {
         setIsLoading(true);
         setError(null);
-        
+
         // Verificar se há leads suficientes para análise
         if (leads.length < 3) {
           setError('Número insuficiente de leads para realizar uma análise detalhada.');
           setIsLoading(false);
           return;
         }
-        
+
+        // Verificar primeiro se a API da OpenAI está configurada
+        try {
+          const apiResponse = await fetch('/api/test-openai');
+          const apiStatus = await apiResponse.json();
+
+          if (!apiStatus.success) {
+            throw new Error(`API da OpenAI não está configurada corretamente: ${apiStatus.message}`);
+          }
+        } catch (apiError: any) {
+          console.error('Erro ao verificar API da OpenAI:', apiError);
+          setError(`Erro na comunicação com a API de IA: ${apiError.message || 'Verifique se a chave da API está configurada corretamente em Administração > Configurar APIs'}`);
+          setIsLoading(false);
+          return;
+        }
+
         const resultado = await analisarLeadsComIA(leads, incluirComparacao);
         setAnalise(resultado);
-      } catch (err) {
+      } catch (err: any) {
         console.error('Erro ao realizar análise:', err);
-        setError('Ocorreu um erro ao processar a análise. Tente novamente mais tarde.');
+        setError(`Ocorreu um erro ao processar a análise: ${err.message || 'Tente novamente mais tarde.'}`);
       } finally {
         setIsLoading(false);
       }
@@ -45,11 +60,27 @@ export default function AnaliseDetalhada({ leads, incluirComparacao = false }: A
     try {
       setIsLoading(true);
       setError(null);
+
+      // Verificar primeiro se a API da OpenAI está configurada
+      try {
+        const apiResponse = await fetch('/api/test-openai');
+        const apiStatus = await apiResponse.json();
+
+        if (!apiStatus.success) {
+          throw new Error(`API da OpenAI não está configurada corretamente: ${apiStatus.message}`);
+        }
+      } catch (apiError: any) {
+        console.error('Erro ao verificar API da OpenAI:', apiError);
+        setError(`Erro na comunicação com a API de IA: ${apiError.message || 'Verifique se a chave da API está configurada corretamente em Administração > Configurar APIs'}`);
+        setIsLoading(false);
+        return;
+      }
+
       const resultado = await analisarLeadsComIA(leads, incluirComparacao);
       setAnalise(resultado);
-    } catch (err) {
+    } catch (err: any) {
       console.error('Erro ao atualizar análise:', err);
-      setError('Ocorreu um erro ao atualizar a análise. Tente novamente mais tarde.');
+      setError(`Ocorreu um erro ao atualizar a análise: ${err.message || 'Tente novamente mais tarde.'}`);
     } finally {
       setIsLoading(false);
     }
@@ -73,6 +104,8 @@ export default function AnaliseDetalhada({ leads, incluirComparacao = false }: A
   }
 
   if (error) {
+    const isApiError = error.includes('API de IA') || error.includes('OpenAI');
+
     return (
       <div className="bg-white dark:bg-gray-800 shadow-md dark:shadow-lg rounded-xl p-6">
         <div className="text-center">
@@ -80,12 +113,24 @@ export default function AnaliseDetalhada({ leads, incluirComparacao = false }: A
             Não foi possível completar a análise
           </h2>
           <p className="text-gray-500 dark:text-gray-400 mb-6">{error}</p>
-          <button
-            onClick={handleRefreshAnalise}
-            className="px-4 py-2 bg-blue-600 hover:bg-blue-700 text-white rounded-lg transition-colors"
-          >
-            Tentar novamente
-          </button>
+
+          <div className="flex flex-col sm:flex-row justify-center gap-4">
+            <button
+              onClick={handleRefreshAnalise}
+              className="px-4 py-2 bg-blue-600 hover:bg-blue-700 text-white rounded-lg transition-colors"
+            >
+              Tentar novamente
+            </button>
+
+            {isApiError && (
+              <a
+                href="/configurar-api"
+                className="px-4 py-2 bg-gray-600 hover:bg-gray-700 text-white rounded-lg transition-colors inline-flex items-center justify-center"
+              >
+                Configurar API
+              </a>
+            )}
+          </div>
         </div>
       </div>
     );
@@ -112,7 +157,7 @@ export default function AnaliseDetalhada({ leads, incluirComparacao = false }: A
               <ArrowPathIcon className="h-5 w-5" />
             </button>
           </div>
-          
+
           <div className="prose dark:prose-invert max-w-none">
             <h3 className="text-xl font-medium text-gray-800 dark:text-gray-200 mb-3">
               Resumo da Situação
@@ -135,7 +180,7 @@ export default function AnaliseDetalhada({ leads, incluirComparacao = false }: A
                 Insights Principais
               </h3>
             </div>
-            
+
             <ul className="space-y-3">
               {analise.insights.map((insight, index) => (
                 <li key={index} className="flex items-start">
@@ -158,7 +203,7 @@ export default function AnaliseDetalhada({ leads, incluirComparacao = false }: A
                 Tendências Identificadas
               </h3>
             </div>
-            
+
             <div className="space-y-4">
               {analise.tendencias.map((tendencia, index) => (
                 <div key={index} className="border-b border-gray-200 dark:border-gray-700 pb-4 last:border-0 last:pb-0">
@@ -189,7 +234,7 @@ export default function AnaliseDetalhada({ leads, incluirComparacao = false }: A
               Recomendações Estratégicas
             </h3>
           </div>
-          
+
           <div className="grid grid-cols-1 md:grid-cols-2 gap-4">
             {analise.recomendacoes.map((recomendacao, index) => (
               <div key={index} className="bg-gray-50 dark:bg-gray-700 p-4 rounded-lg">
@@ -212,13 +257,13 @@ export default function AnaliseDetalhada({ leads, incluirComparacao = false }: A
             <h3 className="text-xl font-medium text-gray-800 dark:text-gray-200 mb-4">
               Comparação com Base de Votação
             </h3>
-            
+
             <div className="prose dark:prose-invert max-w-none mb-6">
               <p className="text-gray-600 dark:text-gray-300">
                 {analise.comparacaoVotacao.resumo}
               </p>
             </div>
-            
+
             <div className="grid grid-cols-1 md:grid-cols-2 gap-6">
               <div>
                 <h4 className="font-medium text-gray-800 dark:text-gray-200 mb-3 flex items-center">
@@ -236,7 +281,7 @@ export default function AnaliseDetalhada({ leads, incluirComparacao = false }: A
                   ))}
                 </ul>
               </div>
-              
+
               <div>
                 <h4 className="font-medium text-gray-800 dark:text-gray-200 mb-3 flex items-center">
                   <CheckCircleIcon className="h-5 w-5 text-green-500 mr-2" />

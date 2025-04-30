@@ -4,12 +4,13 @@ import OpenAI from 'openai';
 export async function GET() {
   try {
     // Verificar se a chave da API está configurada
+    // Não podemos acessar localStorage no servidor, então esta rota só verifica as variáveis de ambiente
     const apiKey = process.env.NEXT_PUBLIC_OPENAI_API_KEY;
-    
+
     if (!apiKey) {
       return NextResponse.json({
         success: false,
-        message: 'NEXT_PUBLIC_OPENAI_API_KEY não está configurada nas variáveis de ambiente',
+        message: 'NEXT_PUBLIC_OPENAI_API_KEY não está configurada nas variáveis de ambiente. Configure a chave na página de administração.',
         isConfigured: false
       }, { status: 400 });
     }
@@ -53,7 +54,7 @@ export async function GET() {
     }
   } catch (error: any) {
     console.error('Erro ao testar conexão com OpenAI:', error);
-    
+
     return NextResponse.json({
       success: false,
       message: `Erro ao conectar à API da OpenAI: ${error.message}`,
