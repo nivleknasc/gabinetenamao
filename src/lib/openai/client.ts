@@ -55,8 +55,16 @@ export async function analisarLeadsComIA(
   incluirComparacao: boolean = false
 ): Promise<AnaliseIA> {
   try {
+    // Limitar o número de leads para evitar exceder o limite de tokens
+    // Selecionar apenas uma amostra representativa (máximo 100 leads)
+    const leadsLimitados = leads.length > 100 ?
+      leads.slice(0, 100) :
+      leads;
+
+    console.log(`Analisando ${leadsLimitados.length} de ${leads.length} leads totais`);
+
     // Preparar os dados para enviar para a API
-    const dadosLeads = leads.map(lead => ({
+    const dadosLeads = leadsLimitados.map(lead => ({
       id: lead.id,
       nome: lead.nome,
       cidade: lead.cidade,
@@ -65,12 +73,39 @@ export async function analisarLeadsComIA(
       data_captacao: lead.data_captacao,
     }));
 
-    // Construir o prompt para a API
+    // Calcular estatísticas básicas para reduzir o tamanho do prompt
+    const cidadesCount: Record<string, number> = {};
+    const bairrosCount: Record<string, number> = {};
+
+    leadsLimitados.forEach(lead => {
+      cidadesCount[lead.cidade] = (cidadesCount[lead.cidade] || 0) + 1;
+      if (lead.bairro) {
+        bairrosCount[lead.bairro] = (bairrosCount[lead.bairro] || 0) + 1;
+      }
+    });
+
+    // Ordenar cidades e bairros por contagem (decrescente)
+    const cidadesOrdenadas = Object.entries(cidadesCount)
+      .sort((a, b) => b[1] - a[1])
+      .slice(0, 10); // Top 10 cidades
+
+    const bairrosOrdenados = Object.entries(bairrosCount)
+      .sort((a, b) => b[1] - a[1])
+      .slice(0, 20); // Top 20 bairros
+
+    // Construir o prompt para a API (versão otimizada)
     let prompt = `
       Você é um assistente especializado em análise política e eleitoral para o Deputado Federal Mauricio Neves (PP-SP).
-      Analise os seguintes dados de leads capturados pelo gabinete:
+      Analise os seguintes dados estatísticos de ${leads.length} leads capturados pelo gabinete:
 
-      ${JSON.stringify(dadosLeads, null, 2)}
+      Top 10 Cidades (nome: quantidade):
+      ${cidadesOrdenadas.map(([cidade, count]) => `${cidade}: ${count}`).join('\n')}
+
+      Top 20 Bairros (nome: quantidade):
+      ${bairrosOrdenados.map(([bairro, count]) => `${bairro}: ${count}`).join('\n')}
+
+      Amostra de 5 leads para referência:
+      ${JSON.stringify(leadsLimitados.slice(0, 5), null, 2)}
 
       Forneça uma análise detalhada incluindo:
       1. Um resumo conciso da situação atual dos leads
@@ -109,7 +144,7 @@ export async function analisarLeadsComIA(
         }
       ],
       temperature: 0.7,
-      max_tokens: 2000,
+      max_tokens: 1000, // Reduzido para economizar tokens
     });
 
     // Processar a resposta
