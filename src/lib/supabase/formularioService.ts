@@ -91,7 +91,7 @@ export async function createFormulario(formulario: Omit<Formulario, 'id'>): Prom
     // Determinar a URL base com base no ambiente
     const isProduction = process.env.NODE_ENV === 'production';
     const baseUrl = isProduction
-      ? 'https://forms.gabinetemao.com.br/f'
+      ? 'https://gabinetenamao.com.br/f'
       : `${process.env.NEXT_PUBLIC_APP_URL || 'http://localhost:3000'}/f`;
 
     // Gerar a URL pública
@@ -271,7 +271,7 @@ export async function initializeDatabase(): Promise<void> {
           },
         ],
         imagem_url: 'https://images.unsplash.com/photo-1551434678-e076c223a692?q=80&w=2070&auto=format&fit=crop',
-        public_url: 'https://forms.gabinetemao.com.br/f/1',
+        public_url: 'https://gabinetenamao.com.br/f/1',
         created_at: new Date().toISOString(),
         aparencia: {
           mostrarCabecalho: true,
@@ -334,7 +334,7 @@ export async function initializeDatabase(): Promise<void> {
           },
         ],
         imagem_url: 'https://images.unsplash.com/photo-1517245386807-bb43f82c33c4?q=80&w=2070&auto=format&fit=crop',
-        public_url: 'https://forms.gabinetemao.com.br/f/2',
+        public_url: 'https://gabinetenamao.com.br/f/2',
         created_at: new Date().toISOString(),
         aparencia: {
           mostrarCabecalho: true,
