@@ -3,7 +3,7 @@
 import { useState, useEffect } from 'react';
 import FormulariosList from '@/components/forms/FormulariosList';
 import { Formulario } from '@/lib/supabase/client';
-import { getFormularios, deleteFormulario, initializeDatabase } from '@/lib/supabase/formularioService';
+import { getFormularios, deleteFormulario } from '@/lib/supabase/formularioService';
 import SupabaseDebug from '@/components/debug/SupabaseDebug';
 
 export default function FormulariosPage() {
@@ -15,10 +15,7 @@ export default function FormulariosPage() {
       try {
         setIsLoading(true);
 
-        // Inicializar o banco de dados com dados de exemplo se estiver vazio
-        await initializeDatabase();
-
-        // Buscar formulários do Supabase
+        // Buscar formulários do Supabase (sem inicializar com dados de exemplo)
         const formulariosList = await getFormularios();
 
         setFormularios(formulariosList);

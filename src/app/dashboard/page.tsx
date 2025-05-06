@@ -12,8 +12,9 @@ import LeadsPorBairro from '@/components/dashboard/LeadsPorBairro';
 import AIInsights from '@/components/dashboard/AIInsights';
 import { MapCard } from '@/components/map/MapCard';
 import { GoogleMapCard } from '@/components/map/GoogleMapCard';
-import { supabase, Lead, Formulario } from '@/lib/supabase/client';
-import mockLeads from '@/data/mockLeads';
+import { Lead, Formulario } from '@/lib/supabase/client';
+import { getFormularios } from '@/lib/supabase/formularioService';
+import { getRecentSubmissions } from '@/lib/supabase/submissionService';
 
 export default function DashboardPage() {
   const [leads, setLeads] = useState<Lead[]>([]);
@@ -32,77 +33,38 @@ export default function DashboardPage() {
   useEffect(() => {
     const fetchData = async () => {
       try {
-        // Em um ambiente real, você buscaria os dados do Supabase
-        // const { data, error } = await supabase.from('leads').select('*');
+        setIsLoading(true);
 
-        // Usando os 3500 leads aleatórios gerados
+        // Buscar formulários reais do Supabase
+        const formulariosList = await getFormularios();
+        setFormularios(formulariosList);
 
-        // Dados de exemplo para demonstração - Formulários
-        const mockFormularios: Formulario[] = [
-          {
-            id: '1',
-            nome: 'Formulário de Contato',
-            descricao: 'Formulário para captação de leads interessados em nossos produtos',
-            campos: [
-              {
-                id: 'campo_1',
-                nome: 'Nome',
-                tipo: 'texto',
-                obrigatorio: true,
-              },
-              {
-                id: 'campo_2',
-                nome: 'Email',
-                tipo: 'email',
-                obrigatorio: true,
-              },
-              {
-                id: 'campo_3',
-                nome: 'Telefone',
-                tipo: 'telefone',
-                obrigatorio: true,
-              },
-            ],
-            created_at: new Date().toISOString(),
-          },
-          {
-            id: '2',
-            nome: 'Pesquisa de Satisfação',
-            descricao: 'Formulário para avaliar a satisfação dos clientes',
-            campos: [
-              {
-                id: 'campo_1',
-                nome: 'Nome',
-                tipo: 'texto',
-                obrigatorio: true,
-              },
-              {
-                id: 'campo_2',
-                nome: 'Email',
-                tipo: 'email',
-                obrigatorio: true,
-              },
-              {
-                id: 'campo_6',
-                nome: 'Avaliação',
-                tipo: 'radio',
-                obrigatorio: true,
-                opcoes: ['Excelente', 'Bom', 'Regular', 'Ruim', 'Péssimo'],
-              },
-            ],
-            created_at: new Date().toISOString(),
-          },
-        ];
+        // Buscar submissões de formulários (leads) do Supabase
+        const submissions = await getRecentSubmissions(500); // Limitar a 500 submissões recentes
 
-        // Usar os 3500 leads aleatórios
-        setLeads(mockLeads);
-        setFilteredLeads(mockLeads);
-        setFormularios(mockFormularios);
-        setTotalLeads(mockLeads.length);
+        // Converter submissões para o formato de leads
+        const leadsFromSubmissions: Lead[] = submissions.map(submission => ({
+          id: submission.id || '',
+          nome: submission.nome || 'Sem nome',
+          email: submission.email || 'Sem email',
+          telefone: submission.telefone || 'Sem telefone',
+          cidade: submission.cidade || 'Sem cidade',
+          estado: submission.estado || 'SP',
+          bairro: submission.bairro || 'Sem bairro',
+          cep: submission.cep || '',
+          endereco: submission.endereco || '',
+          data_captacao: submission.created_at || new Date().toISOString(),
+          formulario_id: submission.formulario_id,
+          dados_adicionais: submission.dados || {}
+        }));
+
+        setLeads(leadsFromSubmissions);
+        setFilteredLeads(leadsFromSubmissions);
+        setTotalLeads(leadsFromSubmissions.length);
 
         // Calcular leads de hoje
         const hoje = new Date().toISOString().split('T')[0];
-        const leadsDeHoje = mockLeads.filter(
+        const leadsDeHoje = leadsFromSubmissions.filter(
           (lead) => lead.data_captacao.split('T')[0] === hoje
         );
         setLeadsHoje(leadsDeHoje.length);
