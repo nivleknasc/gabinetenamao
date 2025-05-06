@@ -124,7 +124,7 @@ export default function NovoFormularioPage() {
         descricao: formData.descricao,
         campos: [...camposPadrao, ...campos],
         imagemUrl: formData.imagemUrl || undefined,
-        publicUrl: `https://forms.gabinetemao.com.br/f/${Date.now()}`,
+        // A URL pública será gerada pelo serviço
         aparencia: aparencia,
       };
 

@@ -13,22 +13,22 @@ export default function FormularioHeader({ formulario, onImageChange }: Formular
   const [isEditing, setIsEditing] = useState(false);
   const [previewUrl, setPreviewUrl] = useState(formulario.imagemUrl || '');
   const fileInputRef = useRef<HTMLInputElement>(null);
-  
-  // URL para visualização do formulário (em um ambiente real, seria uma URL válida)
-  const formUrl = `https://forms.gabinetemao.com.br/f/${formulario.id}`;
-  
+
+  // URL para visualização do formulário
+  const formUrl = formulario.publicUrl || `/f/${formulario.id}`;
+
   const handleImageClick = () => {
     if (fileInputRef.current) {
       fileInputRef.current.click();
     }
   };
-  
+
   const handleFileChange = (e: React.ChangeEvent<HTMLInputElement>) => {
     const file = e.target.files?.[0];
     if (file) {
       // Em um ambiente real, você faria upload da imagem para o Supabase Storage
       // e obteria a URL da imagem
-      
+
       // Para demonstração, vamos apenas criar uma URL local
       const reader = new FileReader();
       reader.onload = () => {
@@ -39,16 +39,16 @@ export default function FormularioHeader({ formulario, onImageChange }: Formular
       reader.readAsDataURL(file);
     }
   };
-  
+
   return (
     <div className="bg-white dark:bg-gray-800 shadow-md dark:shadow-lg rounded-xl overflow-hidden">
       {/* Cabeçalho com imagem */}
       <div className="relative">
         {previewUrl ? (
           <div className="w-full h-48 bg-gray-200 dark:bg-gray-700 relative">
-            <img 
-              src={previewUrl} 
-              alt={formulario.nome} 
+            <img
+              src={previewUrl}
+              alt={formulario.nome}
               className="w-full h-full object-cover"
             />
             <button
@@ -60,7 +60,7 @@ export default function FormularioHeader({ formulario, onImageChange }: Formular
             </button>
           </div>
         ) : (
-          <div 
+          <div
             className="w-full h-48 bg-gray-200 dark:bg-gray-700 flex items-center justify-center cursor-pointer"
             onClick={handleImageClick}
           >
@@ -72,7 +72,7 @@ export default function FormularioHeader({ formulario, onImageChange }: Formular
             </div>
           </div>
         )}
-        
+
         <input
           type="file"
           ref={fileInputRef}
@@ -81,7 +81,7 @@ export default function FormularioHeader({ formulario, onImageChange }: Formular
           onChange={handleFileChange}
         />
       </div>
-      
+
       {/* Informações do formulário */}
       <div className="p-4">
         <div className="flex justify-between items-start">
@@ -93,7 +93,7 @@ export default function FormularioHeader({ formulario, onImageChange }: Formular
               {formulario.descricao}
             </p>
           </div>
-          
+
           <a
             href={formUrl}
             target="_blank"
@@ -104,7 +104,7 @@ export default function FormularioHeader({ formulario, onImageChange }: Formular
             Ver formulário
           </a>
         </div>
-        
+
         <div className="mt-4 flex items-center text-sm text-gray-500 dark:text-gray-400">
           <span className="mr-4">
             {formulario.campos.length} campos

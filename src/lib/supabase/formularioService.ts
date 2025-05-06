@@ -88,6 +88,15 @@ export async function createFormulario(formulario: Omit<Formulario, 'id'>): Prom
     // Gerar um ID único para o formulário
     const id = `form_${Date.now()}`;
 
+    // Determinar a URL base com base no ambiente
+    const isProduction = process.env.NODE_ENV === 'production';
+    const baseUrl = isProduction
+      ? 'https://forms.gabinetemao.com.br/f'
+      : `${process.env.NEXT_PUBLIC_APP_URL || 'http://localhost:3000'}/f`;
+
+    // Gerar a URL pública
+    const publicUrl = `${baseUrl}/${id}`;
+
     // Mapear os campos do código para os campos do banco de dados
     const newFormulario = {
       id,
@@ -95,7 +104,7 @@ export async function createFormulario(formulario: Omit<Formulario, 'id'>): Prom
       descricao: formulario.descricao,
       campos: formulario.campos,
       imagem_url: formulario.imagemUrl,
-      public_url: formulario.publicUrl,
+      public_url: publicUrl, // Usar a URL gerada
       aparencia: formulario.aparencia,
       created_at: new Date().toISOString(),
     };
