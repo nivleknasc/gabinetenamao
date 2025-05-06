@@ -3,9 +3,9 @@
 import { useState, useEffect } from 'react';
 import DashboardLayout from '@/components/layout/DashboardLayout';
 import AnaliseDetalhada from '@/components/ia/AnaliseDetalhada';
-import { supabase, Lead } from '@/lib/supabase/client';
+import { Lead } from '@/lib/supabase/client';
 import { ArrowPathIcon, ChartBarIcon } from '@heroicons/react/24/outline';
-import mockLeads from '@/data/mockLeads';
+import { getRecentSubmissions } from '@/lib/supabase/submissionService';
 
 export default function AnaliseIAPage() {
   const [leads, setLeads] = useState<Lead[]>([]);
@@ -19,8 +19,26 @@ export default function AnaliseIAPage() {
         setIsLoading(true);
         setError(null);
 
-        // Usar os 3500 leads aleatórios em vez de buscar do Supabase
-        setLeads(mockLeads);
+        // Buscar submissões reais do Supabase
+        const submissions = await getRecentSubmissions(500); // Limitar a 500 submissões recentes
+
+        // Converter submissões para o formato de leads
+        const leadsFromSubmissions: Lead[] = submissions.map(submission => ({
+          id: submission.id || '',
+          nome: submission.nome || 'Sem nome',
+          email: submission.email || 'Sem email',
+          telefone: submission.telefone || 'Sem telefone',
+          cidade: submission.cidade || 'Sem cidade',
+          estado: submission.estado || 'SP',
+          bairro: submission.bairro || 'Sem bairro',
+          cep: submission.cep || '',
+          endereco: submission.endereco || '',
+          data_captacao: submission.created_at || new Date().toISOString(),
+          formulario_id: submission.formulario_id,
+          dados_adicionais: submission.dados || {}
+        }));
+
+        setLeads(leadsFromSubmissions);
       } catch (err) {
         console.error('Erro ao processar leads:', err);
         setError('Ocorreu um erro ao carregar os dados. Tente novamente mais tarde.');
