@@ -4,12 +4,26 @@ import { useState, useEffect } from 'react';
 import { useParams } from 'next/navigation';
 import { getFormularioById } from '@/lib/supabase/formularioService';
 import { Formulario, FormularioCampo } from '@/lib/supabase/client';
+import { saveFormSubmission } from '@/lib/supabase/submissionService';
 import { ArrowPathIcon, CheckCircleIcon } from '@heroicons/react/24/outline';
+
+// Adicionar interface para o Google Analytics
+declare global {
+  interface Window {
+    gtag?: (
+      command: string,
+      action: string,
+      params?: {
+        [key: string]: any;
+      }
+    ) => void;
+  }
+}
 
 export default function FormularioPublicoPage() {
   const params = useParams();
   const id = params.id as string;
-  
+
   const [formulario, setFormulario] = useState<Formulario | null>(null);
   const [isLoading, setIsLoading] = useState(true);
   const [error, setError] = useState<string | null>(null);
@@ -23,7 +37,7 @@ export default function FormularioPublicoPage() {
       try {
         setIsLoading(true);
         const data = await getFormularioById(id);
-        
+
         if (!data) {
           setError('Formulário não encontrado');
         } else {
@@ -42,7 +56,7 @@ export default function FormularioPublicoPage() {
 
   const handleInputChange = (e: React.ChangeEvent<HTMLInputElement | HTMLSelectElement | HTMLTextAreaElement>) => {
     const { name, value, type } = e.target as HTMLInputElement;
-    
+
     if (type === 'checkbox') {
       const checked = (e.target as HTMLInputElement).checked;
       setFormData(prev => ({
@@ -55,7 +69,7 @@ export default function FormularioPublicoPage() {
         [name]: value
       }));
     }
-    
+
     // Limpar erro de validação quando o usuário digita
     if (validationErrors[name]) {
       setValidationErrors(prev => {
@@ -68,10 +82,10 @@ export default function FormularioPublicoPage() {
 
   const handleSubmit = async (e: React.FormEvent) => {
     e.preventDefault();
-    
+
     // Validar campos obrigatórios
     const errors: Record<string, string> = {};
-    
+
     if (formulario) {
       formulario.campos.forEach(campo => {
         if (campo.obrigatorio && (!formData[campo.id] || formData[campo.id] === '')) {
@@ -79,35 +93,55 @@ export default function FormularioPublicoPage() {
         }
       });
     }
-    
+
     if (Object.keys(errors).length > 0) {
       setValidationErrors(errors);
       return;
     }
-    
+
     setIsSubmitting(true);
-    
+
     try {
-      // Aqui você enviaria os dados para o Supabase
-      // Exemplo:
-      // const { data, error } = await supabase.from('leads').insert({
-      //   formulario_id: id,
-      //   dados: formData,
-      //   created_at: new Date().toISOString()
-      // });
-      
-      // Simulando o envio
-      await new Promise(resolve => setTimeout(resolve, 1500));
-      
-      console.log('Dados enviados:', {
+      // Coletar informações adicionais
+      const userAgent = navigator.userAgent;
+      let ipAddress = '';
+
+      // Tentar obter o IP do usuário (opcional)
+      try {
+        const ipResponse = await fetch('https://api.ipify.org?format=json');
+        const ipData = await ipResponse.json();
+        ipAddress = ipData.ip;
+      } catch (ipErr) {
+        console.warn('Não foi possível obter o IP do usuário:', ipErr);
+      }
+
+      // Salvar a submissão no Supabase
+      const submission = await saveFormSubmission({
         formulario_id: id,
-        dados: formData
+        dados: formData,
+        ip_address: ipAddress,
+        user_agent: userAgent
       });
-      
+
+      if (!submission) {
+        throw new Error('Não foi possível salvar o formulário');
+      }
+
+      console.log('Dados enviados com sucesso:', submission);
+
+      // Registrar evento de conversão (para análise)
+      if (typeof window !== 'undefined' && window.gtag) {
+        window.gtag('event', 'form_submission', {
+          'event_category': 'forms',
+          'event_label': formulario?.nome || id,
+          'value': 1
+        });
+      }
+
       setSubmitted(true);
     } catch (err) {
       console.error('Erro ao enviar formulário:', err);
-      setError('Ocorreu um erro ao enviar o formulário');
+      setError('Ocorreu um erro ao enviar o formulário. Por favor, tente novamente.');
     } finally {
       setIsSubmitting(false);
     }
@@ -198,21 +232,21 @@ export default function FormularioPublicoPage() {
             <div className="text-center mb-6">
               {formulario.imagemUrl && (
                 <div className="mb-4">
-                  <img 
-                    src={formulario.imagemUrl} 
-                    alt={formulario.nome} 
+                  <img
+                    src={formulario.imagemUrl}
+                    alt={formulario.nome}
                     className="mx-auto h-32 object-cover rounded-lg"
                   />
                 </div>
               )}
-              <h1 
+              <h1
                 className={`text-2xl font-bold ${textColor} mb-2`}
                 style={{ color: aparencia.corTexto }}
               >
                 {formulario.nome}
               </h1>
               {aparencia.mostrarDescricaoInicio && formulario.descricao && (
-                <p 
+                <p
                   className={`${aparencia.fundoEscuro ? 'text-gray-300' : 'text-gray-600'}`}
                   style={{ color: aparencia.corTexto }}
                 >
@@ -225,8 +259,8 @@ export default function FormularioPublicoPage() {
           <div className="space-y-4">
             {formulario.campos.map((campo) => (
               <div key={campo.id}>
-                <label 
-                  htmlFor={campo.id} 
+                <label
+                  htmlFor={campo.id}
                   className={`block text-sm font-medium ${labelColor} mb-1`}
                   style={{ color: aparencia.corTexto }}
                 >
@@ -244,7 +278,7 @@ export default function FormularioPublicoPage() {
 
           {aparencia.mostrarDescricaoFim && formulario.descricao && (
             <div className="mt-6">
-              <p 
+              <p
                 className={`${aparencia.fundoEscuro ? 'text-gray-300' : 'text-gray-600'} text-sm`}
                 style={{ color: aparencia.corTexto }}
               >
@@ -270,8 +304,8 @@ export default function FormularioPublicoPage() {
 }
 
 function renderCampo(
-  campo: FormularioCampo, 
-  formData: Record<string, any>, 
+  campo: FormularioCampo,
+  formData: Record<string, any>,
   handleInputChange: (e: React.ChangeEvent<HTMLInputElement | HTMLSelectElement | HTMLTextAreaElement>) => void,
   inputBgColor: string,
   inputTextColor: string

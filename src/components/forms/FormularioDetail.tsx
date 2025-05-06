@@ -2,8 +2,9 @@
 
 import { useState } from 'react';
 import { Formulario } from '@/lib/supabase/client';
-import { XMarkIcon, LinkIcon } from '@heroicons/react/24/outline';
+import { XMarkIcon, LinkIcon, InboxIcon } from '@heroicons/react/24/outline';
 import FormularioHeader from './FormularioHeader';
+import Link from 'next/link';
 
 interface FormularioDetailProps {
   formulario: Formulario;
@@ -74,17 +75,26 @@ export default function FormularioDetail({ formulario, onClose }: FormularioDeta
                     <p className="text-sm font-medium text-gray-500 dark:text-gray-400">Descrição</p>
                     <p className="text-base text-gray-900 dark:text-gray-300 mt-1">{currentFormulario.descricao}</p>
                   </div>
-                  {currentFormulario.publicUrl && (
-                    <a
-                      href={currentFormulario.publicUrl}
-                      target="_blank"
-                      rel="noopener noreferrer"
+                  <div className="flex space-x-2">
+                    {currentFormulario.publicUrl && (
+                      <a
+                        href={currentFormulario.publicUrl}
+                        target="_blank"
+                        rel="noopener noreferrer"
+                        className="inline-flex items-center px-3 py-1.5 border border-gray-300 dark:border-gray-600 text-sm font-medium rounded-md text-gray-700 dark:text-gray-300 bg-white dark:bg-gray-800 hover:bg-gray-50 dark:hover:bg-gray-700 transition-colors duration-200"
+                      >
+                        <LinkIcon className="h-4 w-4 mr-1" />
+                        Ver formulário online
+                      </a>
+                    )}
+                    <Link
+                      href={`/dashboard/formularios/${currentFormulario.id}/submissoes`}
                       className="inline-flex items-center px-3 py-1.5 border border-gray-300 dark:border-gray-600 text-sm font-medium rounded-md text-gray-700 dark:text-gray-300 bg-white dark:bg-gray-800 hover:bg-gray-50 dark:hover:bg-gray-700 transition-colors duration-200"
                     >
-                      <LinkIcon className="h-4 w-4 mr-1" />
-                      Ver formulário online
-                    </a>
-                  )}
+                      <InboxIcon className="h-4 w-4 mr-1" />
+                      Ver submissões
+                    </Link>
+                  </div>
                 </div>
               </div>
             </div>
